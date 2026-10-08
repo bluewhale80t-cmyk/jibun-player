@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#d92b6a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="自作プレイヤー">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+</style>
+<title>自作プレイヤー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: 1カラム。上に再生カード、下に曲リスト(スクロール)。ジャケットがあれば表示、なければ回るディスク。 */
+:root {
+  --bg: #f5f3f7;
+  --surface: #ffffff;
+  --fg: #1d1a22;
+  --muted: #6c6575;
+  --line: #e4dfe9;
+  --accent: #d92b6a;
+  --accent-fg: #ffffff;
+  --accent-soft: #fbe3ec;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141117; --surface: #1e1a23; --fg: #f1edf4; --muted: #9b94a4;
+    --line: #322c39; --accent: #ff5c93; --accent-fg: #1a0710; --accent-soft: #3a1b29;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141117; --surface: #1e1a23; --fg: #f1edf4; --muted: #9b94a4;
+  --line: #322c39; --accent: #ff5c93; --accent-fg: #1a0710; --accent-soft: #3a1b29;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  padding-inline: 16px; padding-block: 12px;
+}
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+svg { display: block; fill: currentColor; }
+
+.app { height: 100%; max-width: 560px; margin-inline: auto; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.top h1 { font-size: 18px; font-weight: 700; letter-spacing: .02em; margin: 0; }
+.add {
+  position: relative; overflow: hidden;
+  display: inline-flex; align-items: center; gap: 6px; height: 40px; padding-inline: 16px;
+  background: var(--accent); color: var(--accent-fg); border-radius: 20px; font-weight: 700; font-size: 14px;
+}
+.add svg { width: 18px; height: 18px; }
+.add input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 0; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+  padding: 16px; display: flex; flex-direction: column; gap: 14px;
+}
+.now { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.art { flex: none; width: 84px; height: 84px; }
+.art img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 16px; border: 1px solid var(--line); background: var(--accent-soft); }
+.disc {
+  width: 100%; height: 100%; border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, var(--bg) 0 7px, var(--accent) 7px 18px, transparent 18px),
+    repeating-radial-gradient(circle at 50% 50%, var(--line) 0 1px, var(--surface) 1px 4px);
+  border: 1px solid var(--line);
+}
+.disc.spin { animation: spin 5s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .disc.spin { animation: none; } }
+.meta { min-width: 0; flex: 1; }
+.label { font-size: 11px; letter-spacing: .12em; color: var(--muted); }
+.title { font-size: 17px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.artist { font-size: 13px; color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-height: 1.5em; }
+.sub { font-size: 12px; color: var(--muted); font-family: var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.seek { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.seek span { flex: none; width: 40px; }
+.seek span:last-child { text-align: right; }
+input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent); height: 28px; margin: 0; }
+
+.ctrls { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ico { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--fg); }
+.ico svg { width: 24px; height: 24px; }
+.ico.mode { color: var(--muted); }
+.ico.mode.on { color: var(--accent); background: var(--accent-soft); }
+.ico:active { opacity: .6; }
+.play { width: 62px; height: 62px; background: var(--accent); color: var(--accent-fg); }
+.play svg { width: 30px; height: 30px; }
+
+.listhead { display: flex; align-items: center; gap: 8px; }
+.listhead input[type=search] {
+  flex: 1; min-width: 0; height: 38px; border-radius: 19px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--fg); padding-inline: 14px; font: inherit; font-size: 14px;
+}
+.chip { height: 38px; padding-inline: 12px; border-radius: 19px; border: 1px solid var(--line); font-size: 13px; color: var(--muted); white-space: nowrap; }
+.chip.warn { color: var(--accent); border-color: var(--accent); }
+.count { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+
+.list { flex: 1; min-height: 0; overflow-y: auto; list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.row { display: flex; align-items: center; border-bottom: 1px solid var(--line); }
+.row .pick { flex: 1; min-width: 0; text-align: left; padding: 8px 4px; display: flex; align-items: center; gap: 12px; }
+.th { flex: none; width: 48px; height: 48px; border-radius: 10px; object-fit: cover; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; border: 1px solid var(--line); }
+.th svg { width: 22px; height: 22px; }
+.tx { min-width: 0; flex: 1; }
+.nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ar { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row.cur .nm { color: var(--accent); font-weight: 700; }
+.row.cur .th { border-color: var(--accent); }
+.mini { flex: none; width: 40px; height: 40px; display: grid; place-items: center; color: var(--muted); border-radius: 50%; }
+.mini svg { width: 20px; height: 20px; }
+.mini:active { background: var(--accent-soft); }
+
+.empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 10px; color: var(--muted); padding: 24px 8px; }
+.empty b { color: var(--fg); font-size: 16px; }
+.empty p { margin: 0; max-width: 30ch; text-wrap: balance; }
+.note { font-size: 12px; color: var(--muted); text-align: center; }
+[hidden] { display: none !important; }
+</style>
+
+</head>
+<body>
+<main class="app">
+  <div class="top">
+    <h1>自作プレイヤー</h1>
+    <div class="add">
+      <svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>曲を追加
+      <input id="file" type="file" accept="audio/*,.mp3,.m4a,.aac,.wav,.flac,.ogg,.opus" multiple aria-label="曲を追加">
+    </div>
+  </div>
+
+  <section class="card" aria-label="再生中">
+    <div class="now">
+      <div class="art">
+        <div class="disc" id="disc"></div>
+        <img id="cover" alt="ジャケット画像" hidden>
+      </div>
+      <div class="meta">
+        <div class="label">NOW PLAYING</div>
+        <div class="title" id="title">曲を選んでください</div>
+        <div class="artist" id="artist"></div>
+        <div class="sub" id="sub">広告なし / 順番どおり再生</div>
+      </div>
+    </div>
+    <div class="seek">
+      <span id="cur">0:00</span>
+      <input id="bar" type="range" min="0" max="1" step="0.1" value="0" aria-label="再生位置">
+      <span id="dur">0:00</span>
+    </div>
+    <div class="ctrls">
+      <button class="ico mode" id="shuffle" aria-label="シャッフル" aria-pressed="false">
+        <svg viewBox="0 0 24 24"><path d="M17 3l4 4-4 4V8h-2.6l-3.1 4.4-1.6-1.1L12.9 6H17zM3 7h4.4l2.3 3.3-1.2 1.7L6.3 9H3zM17 13l4 4-4 4v-3h-4.1l-2.4-3.4 1.2-1.7L13.8 16H17zM3 15h3.3l2 2.8-1.2 1.7L5.2 17H3z"/></svg>
+      </button>
+      <button class="ico" id="prev" aria-label="前の曲"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+      <button class="ico play" id="play" aria-label="再生"><svg id="playIco" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+      <button class="ico" id="next" aria-label="次の曲"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5l11 7L4 19z"/></svg></button>
+      <button class="ico mode" id="repeat" aria-label="リピート" aria-pressed="false">
+        <svg id="repIco" viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2zM17 17H7v-3l-4 4 4 4v-3h12v-6h-2z"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <div class="listhead">
+    <input id="q" type="search" placeholder="曲名・アーティストで絞り込み" aria-label="曲名・アーティストで絞り込み">
+    <button class="chip" id="sort">名前順</button>
+    <button class="chip" id="clear">全削除</button>
+  </div>
+  <div class="count" id="count"></div>
+
+  <ul class="list" id="list"></ul>
+  <div class="empty" id="empty" hidden>
+    <b>まだ曲がありません</b>
+    <p>右上の「曲を追加」から、スマホに入っている音楽ファイルを選んでください。曲名・アーティスト・ジャケットはファイルの情報から読み取ります。</p>
+  </div>
+  <div class="note">画面を閉じると再生が止まる場合があります。</div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js" crossorigin="anonymous"></script>
+<script>
+(function () {
+  var $ = function (s) { return document.querySelector(s); };
+  var tracks = [], cur = -1, shuffle = false, repeat = 'off', url = null, seeking = false, query = '';
+  var covers = {};
+  var audio = new Audio(); audio.preload = 'auto';
+
+  var ICON_PLAY = '<path d="M8 5v14l11-7z"/>';
+  var ICON_PAUSE = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
+  var ICON_REP = '<path d="M7 7h10v3l4-4-4-4v3H5v6h2zM17 17H7v-3l-4 4 4 4v-3h12v-6h-2z"/>';
+  var ICON_REP1 = '<path d="M7 7h10v3l4-4-4-4v3H5v6h2zM17 17H7v-3l-4 4 4 4v-3h12v-6h-2zM11 9h2v6h-1.6v-4.3l-1 .5V10z"/>';
+  var ICON_NEXTUP = '<path d="M4 6h10v2H4zM4 11h10v2H4zM4 16h6v2H4zM16 12h2v3h3v2h-3v3h-2v-3h-3v-2h3z"/>';
+  var ICON_X = '<path d="M6.4 5l5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6l5.6-5.6L5 6.4z"/>';
+  var ICON_NOTE = '<path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3z"/>';
+
+  function fmt(s) { if (!isFinite(s)) return '0:00'; s = Math.floor(s); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function ttl(t) { return t.title || t.name; }
+  function coverUrl(t) {
+    if (!t || !t.cover) return null;
+    if (!covers[t.id]) covers[t.id] = URL.createObjectURL(t.cover);
+    return covers[t.id];
+  }
+  function dropCover(t) { if (covers[t.id]) { URL.revokeObjectURL(covers[t.id]); delete covers[t.id]; } }
+
+  /* ---- 保存(IndexedDB) ---- */
+  var dbp;
+  function db() {
+    if (!dbp) dbp = new Promise(function (res, rej) {
+      try {
+        var r = indexedDB.open('jibun-player', 1);
+        r.onupgradeneeded = function () { r.result.createObjectStore('tracks', { keyPath: 'id' }); };
+        r.onsuccess = function () { res(r.result); };
+        r.onerror = function () { rej(r.error); };
+      } catch (e) { rej(e); }
+    });
+    return dbp;
+  }
+  function tx(fn) {
+    return db().then(function (d) {
+      return new Promise(function (res, rej) {
+        var t = d.transaction('tracks', 'readwrite'), out = fn(t.objectStore('tracks'));
+        t.oncomplete = function () { res(out && out.result); };
+        t.onerror = function () { rej(t.error); };
+      });
+    }).catch(function () { return null; });
+  }
+  function saveOrder() { lsSet('order', JSON.stringify(tracks.map(function (t) { return t.id; }))); }
+
+  /* ---- タグ(曲名・アーティスト・ジャケット)の読み取り ---- */
+  function readTags(file) {
+    return new Promise(function (res) {
+      if (!window.jsmediatags) return res(null);
+      var done = false;
+      var to = setTimeout(function () { if (!done) { done = true; res(null); } }, 6000);
+      try {
+        window.jsmediatags.read(file, {
+          onSuccess: function (tag) { if (done) return; done = true; clearTimeout(to); res(tag.tags || null); },
+          onError: function () { if (done) return; done = true; clearTimeout(to); res(null); }
+        });
+      } catch (e) { clearTimeout(to); res(null); }
+    });
+  }
+  function shrink(blob) {
+    return new Promise(function (res) {
+      var u = URL.createObjectURL(blob), im = new Image();
+      im.onload = function () {
+        try {
+          var m = Math.min(1, 512 / Math.max(im.width, im.height)), w = Math.round(im.width * m), h = Math.round(im.height * m);
+          var c = document.createElement('canvas'); c.width = w; c.height = h;
+          c.getContext('2d').drawImage(im, 0, 0, w, h);
+          URL.revokeObjectURL(u);
+          c.toBlob(function (b) { res(b || blob); }, 'image/jpeg', 0.85);
+        } catch (e) { URL.revokeObjectURL(u); res(blob); }
+      };
+      im.onerror = function () { URL.revokeObjectURL(u); res(null); };
+      im.src = u;
+    });
+  }
+  function enrich(t) {
+    return readTags(t.blob).then(function (tags) {
+      t.tagged = true;
+      if (!tags) return;
+      if (tags.title) t.title = String(tags.title).trim();
+      if (tags.artist) t.artist = String(tags.artist).trim();
+      if (tags.album) t.album = String(tags.album).trim();
+      if (tags.picture && tags.picture.data) {
+        var b = new Blob([new Uint8Array(tags.picture.data)], { type: tags.picture.format || 'image/jpeg' });
+        return shrink(b).then(function (c) { if (c) t.cover = c; });
+      }
+    });
+  }
+  var enq = Promise.resolve();
+  function queueEnrich(t) {
+    enq = enq.then(function () { return enrich(t); }).then(function () {
+      if (tracks.indexOf(t) < 0) return;
+      tx(function (s) { return s.put(t); });
+      renderList();
+      if (tracks[cur] === t) { renderNow(); mediaMeta(); }
+    }).catch(function () {});
+  }
+
+  /* ---- 表示 ---- */
+  function setIcon(el, path) { el.innerHTML = path; }
+  function renderList() {
+    var list = $('#list'), q = query.trim().toLowerCase(), html = '';
+    tracks.forEach(function (t, i) {
+      if (q && (ttl(t) + ' ' + (t.artist || '') + ' ' + (t.album || '') + ' ' + t.name).toLowerCase().indexOf(q) < 0) return;
+      var u = coverUrl(t);
+      var th = u ? '<img class="th" src="' + u + '" alt="" loading="lazy" decoding="async">'
+                 : '<span class="th"><svg viewBox="0 0 24 24">' + ICON_NOTE + '</svg></span>';
+      html += '<li class="row' + (i === cur ? ' cur' : '') + '" data-i="' + i + '">' +
+        '<button class="pick" data-a="play">' + th + '<span class="tx"><div class="nm">' + esc(ttl(t)) + '</div>' +
+        (t.artist ? '<div class="ar">' + esc(t.artist) + '</div>' : '') + '</span></button>' +
+        '<button class="mini" data-a="next" aria-label="次に再生"><svg viewBox="0 0 24 24">' + ICON_NEXTUP + '</svg></button>' +
+        '<button class="mini" data-a="del" aria-label="削除"><svg viewBox="0 0 24 24">' + ICON_X + '</svg></button></li>';
+    });
+    list.innerHTML = html;
+    $('#empty').hidden = tracks.length > 0;
+    list.hidden = tracks.length === 0;
+    $('#count').textContent = tracks.length ? tracks.length + ' 曲' : '';
+  }
+  function renderNow() {
+    var t = tracks[cur], u = coverUrl(t);
+    $('#title').textContent = t ? ttl(t) : '曲を選んでください';
+    $('#artist').textContent = t ? (t.artist || '') : '';
+    $('#sub').textContent = t ? ((cur + 1) + ' / ' + tracks.length + (t.album ? '  ' + t.album : '')) : '広告なし / 順番どおり再生';
+    var img = $('#cover');
+    if (u) { if (img.getAttribute('src') !== u) img.src = u; } else img.removeAttribute('src');
+    img.hidden = !u; $('#disc').hidden = !!u;
+  }
+  function renderModes() {
+    var s = $('#shuffle'), r = $('#repeat');
+    s.classList.toggle('on', shuffle); s.setAttribute('aria-pressed', shuffle);
+    r.classList.toggle('on', repeat !== 'off'); r.setAttribute('aria-pressed', repeat !== 'off');
+    r.setAttribute('aria-label', repeat === 'one' ? 'リピート: 1曲' : repeat === 'all' ? 'リピート: 全曲' : 'リピート: なし');
+    setIcon($('#repIco'), repeat === 'one' ? ICON_REP1 : ICON_REP);
+  }
+  function renderPlaying() {
+    var p = !audio.paused;
+    setIcon($('#playIco'), p ? ICON_PAUSE : ICON_PLAY);
+    $('#play').setAttribute('aria-label', p ? '一時停止' : '再生');
+    $('#disc').classList.toggle('spin', p);
+  }
+  function resetBar() { $('#cur').textContent = '0:00'; $('#dur').textContent = '0:00'; $('#bar').value = 0; }
+
+  /* ---- 再生制御 ---- */
+  function nextIndex(auto) {
+    var n = tracks.length;
+    if (!n) return -1;
+    if (auto && repeat === 'one') return cur;
+    if (shuffle && n > 1) { var r; do { r = Math.floor(Math.random() * n); } while (r === cur); return r; }
+    var i = cur + 1;
+    if (i < n) return i;
+    return (repeat === 'all' || !auto) ? 0 : -1;
+  }
+  function play(i) {
+    if (i < 0 || i >= tracks.length) return;
+    cur = i;
+    if (url) URL.revokeObjectURL(url);
+    url = URL.createObjectURL(tracks[i].blob);
+    audio.src = url;
+    var p = audio.play(); if (p && p.catch) p.catch(function () {});
+    renderNow(); renderList(); mediaMeta();
+    var row = $('#list .cur'); if (row && row.scrollIntoView) row.scrollIntoView({ block: 'nearest' });
+  }
+  function toggle() {
+    if (cur < 0) { if (tracks.length) play(shuffle ? Math.floor(Math.random() * tracks.length) : 0); return; }
+    if (audio.paused) { var p = audio.play(); if (p && p.catch) p.catch(function () {}); } else audio.pause();
+  }
+  function prev() {
+    if (!tracks.length) return;
+    if (audio.currentTime > 3 || (cur <= 0 && repeat !== 'all')) { audio.currentTime = 0; return; }
+    play(cur <= 0 ? tracks.length - 1 : cur - 1);
+  }
+  function next() { var i = nextIndex(false); if (i >= 0) play(i); }
+
+  function mediaMeta() {
+    try {
+      if (!('mediaSession' in navigator) || cur < 0) return;
+      var t = tracks[cur], u = coverUrl(t);
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: ttl(t), artist: t.artist || '自作プレイヤー', album: t.album || '',
+        artwork: u ? [{ src: u, sizes: '512x512', type: 'image/jpeg' }] : []
+      });
+      navigator.mediaSession.setActionHandler('play', toggle);
+      navigator.mediaSession.setActionHandler('pause', toggle);
+      navigator.mediaSession.setActionHandler('previoustrack', prev);
+      navigator.mediaSession.setActionHandler('nexttrack', next);
+    } catch (e) {}
+  }
+
+  audio.addEventListener('play', renderPlaying);
+  audio.addEventListener('pause', renderPlaying);
+  audio.addEventListener('loadedmetadata', function () { $('#bar').max = audio.duration || 1; $('#dur').textContent = fmt(audio.duration); });
+  audio.addEventListener('timeupdate', function () {
+    $('#cur').textContent = fmt(audio.currentTime);
+    if (!seeking) $('#bar').value = audio.currentTime;
+  });
+  audio.addEventListener('ended', function () {
+    var i = nextIndex(true);
+    if (i >= 0) play(i); else { audio.currentTime = 0; renderPlaying(); }
+  });
+  audio.addEventListener('error', function () { if (cur >= 0) $('#sub').textContent = 'この曲は再生できません'; });
+
+  var bar = $('#bar');
+  bar.addEventListener('input', function () { seeking = true; $('#cur').textContent = fmt(+bar.value); });
+  bar.addEventListener('change', function () { audio.currentTime = +bar.value; seeking = false; });
+
+  $('#play').onclick = toggle;
+  $('#prev').onclick = prev;
+  $('#next').onclick = next;
+  $('#shuffle').onclick = function () { shuffle = !shuffle; lsSet('shuffle', shuffle ? '1' : '0'); renderModes(); };
+  $('#repeat').onclick = function () { repeat = repeat === 'off' ? 'all' : repeat === 'all' ? 'one' : 'off'; lsSet('repeat', repeat); renderModes(); };
+  $('#q').addEventListener('input', function (e) { query = e.target.value; renderList(); });
+
+  $('#sort').onclick = function () {
+    var id = cur >= 0 ? tracks[cur].id : null;
+    tracks.sort(function (a, b) { return ttl(a).localeCompare(ttl(b), 'ja', { numeric: true }); });
+    if (id !== null) cur = tracks.findIndex(function (t) { return t.id === id; });
+    saveOrder(); renderList(); renderNow();
+  };
+  var clearTimer;
+  $('#clear').onclick = function () {
+    var b = $('#clear');
+    if (!b.classList.contains('warn')) {
+      b.classList.add('warn'); b.textContent = 'もう一度押すと全削除';
+      clearTimer = setTimeout(function () { b.classList.remove('warn'); b.textContent = '全削除'; }, 3000);
+      return;
+    }
+    clearTimeout(clearTimer); b.classList.remove('warn'); b.textContent = '全削除';
+    audio.pause(); audio.removeAttribute('src'); cur = -1;
+    var ids = tracks.map(function (t) { return t.id; });
+    tracks.forEach(dropCover); tracks = [];
+    tx(function (s) { ids.forEach(function (id) { s.delete(id); }); });
+    saveOrder(); renderList(); renderNow(); renderPlaying(); resetBar();
+  };
+
+  $('#list').addEventListener('click', function (e) {
+    var btn = e.target.closest('button'); if (!btn) return;
+    var row = btn.closest('.row'), i = +row.dataset.i, a = btn.dataset.a;
+    if (a === 'play') play(i);
+    else if (a === 'next') {
+      if (cur < 0 || i === cur) return;
+      var t = tracks.splice(i, 1)[0]; if (i < cur) cur--;
+      tracks.splice(cur + 1, 0, t); saveOrder(); renderList(); renderNow();
+    } else if (a === 'del') {
+      var d = tracks[i], wasCur = i === cur;
+      tracks.splice(i, 1); dropCover(d);
+      tx(function (s) { s.delete(d.id); });
+      if (wasCur) { audio.pause(); audio.removeAttribute('src'); cur = -1; renderPlaying(); resetBar(); }
+      else if (i < cur) cur--;
+      saveOrder(); renderList(); renderNow();
+    }
+  });
+
+  $('#file').addEventListener('change', function (e) {
+    var files = Array.prototype.slice.call(e.target.files || []);
+    var ok = /\.(mp3|m4a|aac|wav|flac|ogg|opus|mp4)$/i, added = 0;
+    files.forEach(function (f) {
+      if (f.type.indexOf('audio/') !== 0 && !ok.test(f.name)) return;
+      added++;
+      var t = { id: Date.now() * 1000 + Math.floor(Math.random() * 1000), name: f.name.replace(/\.[^.]+$/, ''), blob: f, tagged: false };
+      tracks.push(t);
+      tx(function (s) { return s.put(t); });
+      queueEnrich(t);
+    });
+    e.target.value = '';
+    saveOrder(); renderList(); renderNow();
+    if (files.length) {
+      var c = $('#count'), msg = added ? added + ' 曲を追加しました' : '音楽ファイルが見つかりませんでした';
+      c.textContent = msg;
+      setTimeout(function () { renderList(); }, 2500);
+    }
+  });
+
+  /* ---- 起動 ---- */
+  shuffle = lsGet('shuffle') === '1';
+  var r = lsGet('repeat'); if (r === 'all' || r === 'one') repeat = r;
+  renderModes(); renderPlaying(); renderList();
+  tx(function (s) { return s.getAll(); }).then(function (all) {
+    if (!all || !all.length) return;
+    var order = [];
+    try { order = JSON.parse(lsGet('order') || '[]'); } catch (e) {}
+    var pos = {}; order.forEach(function (id, i) { pos[id] = i; });
+    all.sort(function (a, b) {
+      var pa = a.id in pos ? pos[a.id] : 1e9, pb = b.id in pos ? pos[b.id] : 1e9;
+      return pa !== pb ? pa - pb : a.name.localeCompare(b.name, 'ja', { numeric: true });
+    });
+    var extra = tracks.filter(function (t) { return !all.some(function (x) { return x.id === t.id; }); });
+    tracks = all.concat(extra);
+    renderList(); renderNow();
+    all.forEach(function (t) { if (!t.tagged) queueEnrich(t); });
+  });
+})();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+}
+</script>
+</body>
+</html>
