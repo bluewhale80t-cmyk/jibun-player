@@ -653,35 +653,41 @@ body.staging #veil { opacity: 0; }
     bgFront = next;
     if (u) pickColor(u); else applyColor(330, 70);
   }
+  var accH = 330, accS = 70;
   function applyColor(h, s) {
+    accH = h; accS = s;
     document.documentElement.style.setProperty('--h', Math.round(h));
-    document.documentElement.style.setProperty('--s', Math.round(s) + '%');
+    document.documentElement.style.setProperty('--s', Math.round(Math.max(s, 12)) + '%');
     var dark = matchMedia('(prefers-color-scheme: dark)').matches;
     var m = document.querySelector('meta[name=theme-color]');
     if (m) m.content = 'hsl(' + Math.round(h) + ' 35% ' + (dark ? 12 : 88) + '%)';
   }
-  // ジャケットの「いちばん色のある部分」の色相を取る
+  // ジャケットでいちばん多い色を選ぶ(色を平均すると赤+青が紫になるので、色ごとに数えて一番多いものを使う)
   function pickColor(u) {
     var im = new Image();
     im.onload = function () {
       try {
-        var c = document.createElement('canvas'); c.width = c.height = 24;
-        var g = c.getContext('2d'); g.drawImage(im, 0, 0, 24, 24);
-        var d = g.getImageData(0, 0, 24, 24).data, x = 0, y = 0, wsum = 0, ssum = 0;
+        var N = 32, c = document.createElement('canvas'); c.width = c.height = N;
+        var g = c.getContext('2d'); g.drawImage(im, 0, 0, N, N);
+        var d = g.getImageData(0, 0, N, N).data, B = 24, wt = new Float32Array(B), hs = new Float32Array(B), ss = new Float32Array(B), total = 0;
         for (var i = 0; i < d.length; i += 4) {
           var r = d[i] / 255, gg = d[i + 1] / 255, b = d[i + 2] / 255;
           var mx = Math.max(r, gg, b), mn = Math.min(r, gg, b), l = (mx + mn) / 2, ch = mx - mn;
-          if (ch < .08) continue;
-          var s = ch / (1 - Math.abs(2 * l - 1) || 1), h;
+          if (ch < .1 || l < .08 || l > .95) continue;
+          var sat = ch / (1 - Math.abs(2 * l - 1) || 1), h;
           if (mx === r) h = ((gg - b) / ch) % 6; else if (mx === gg) h = (b - r) / ch + 2; else h = (r - gg) / ch + 4;
           h *= 60; if (h < 0) h += 360;
-          var w = s * (1 - Math.abs(l - .5) * 1.4);
+          var w = sat * (1 - Math.abs(l - .5) * 1.2);
           if (w <= 0) continue;
-          x += Math.cos(h * Math.PI / 180) * w; y += Math.sin(h * Math.PI / 180) * w; wsum += w; ssum += s * w;
+          var k = Math.floor(h / (360 / B)) % B;
+          wt[k] += w; hs[k] += h * w; ss[k] += sat * w; total += w;
         }
-        if (wsum < .5) return applyColor(300, 25);
-        var hue = Math.atan2(y, x) * 180 / Math.PI; if (hue < 0) hue += 360;
-        applyColor(hue, Math.max(45, Math.min(85, ssum / wsum * 100)));
+        // 色がほとんどないジャケット → 白っぽい光にする
+        if (total < N * N * .04) return applyColor(accH, 6);
+        var best = 0, bestW = -1;
+        for (var j = 0; j < B; j++) { var sw = wt[j] + .5 * (wt[(j + 1) % B] + wt[(j + B - 1) % B]); if (sw > bestW) { bestW = sw; best = j; } }
+        var hue = hs[best] / wt[best], sAvg = ss[best] / wt[best] * 100;
+        applyColor(hue, Math.max(40, Math.min(85, sAvg)));
       } catch (e) {}
     };
     im.src = u;
@@ -1058,8 +1064,8 @@ body.staging #veil { opacity: 0; }
   }
   function accentRGB(l, a) {
     if (look.glow === 'custom') { var c = hexHue(look.glowColor); return 'hsla(' + c.h + ',' + Math.max(30, c.s) + '%,' + l + '%,' + a + ')'; }
-    var hh = +getComputedStyle(document.documentElement).getPropertyValue('--h') || 330;
-    return 'hsla(' + hh + ',90%,' + l + '%,' + a + ')';
+    if (accS < 15) return 'hsla(' + accH + ',' + accS + '%,' + Math.min(95, l + 18) + '%,' + a + ')';
+    return 'hsla(' + accH + ',' + Math.min(95, accS + 10) + '%,' + l + '%,' + a + ')';
   }
   function lv(i) { return Math.min(1, levels[i] * (look.gain || 100) / 100); }
   var colA = '', colB = '', colTick = 0;
