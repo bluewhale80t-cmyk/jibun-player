@@ -1,13 +1,13 @@
 {
-  "name": "自作プレイヤー",
-  "short_name": "自作プレイヤー",
-  "description": "広告なし・好きな曲を選んで再生できる音楽プレイヤー",
+  "name": "うさチルplayer",
+  "short_name": "うさチル",
+  "description": "広告なし・好きな曲を選んで再生できる、うさぎの音楽プレイヤー",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f5f3f7",
-  "theme_color": "#d92b6a",
+  "background_color": "#f3e6f7",
+  "theme_color": "#2a1f33",
   "lang": "ja",
   "icons": [
     {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
