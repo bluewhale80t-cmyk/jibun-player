@@ -1,7 +1,15 @@
 <!doctype html>
+<!--
+  うさチルplayer
+  © 2026 kiri.karasuba All rights reserved.
+  このコード・デザイン・アイコンの無断転載、複製、再配布、改変しての公開を禁じます。
+  Unauthorized copying, redistribution, or republishing of this code, design, or icon is prohibited.
+-->
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<meta name="author" content="kiri.karasuba">
+<meta name="copyright" content="© 2026 kiri.karasuba">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#2a1f33">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -239,6 +247,7 @@ input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent); height: 
 :root[data-cs="l"] #stage .scover.sq { width: min(62vw, 290px); }
 :root[data-cs="s"] #stage .scover.ph { width: min(40vw, 190px); }
 :root[data-cs="l"] #stage .scover.ph { width: min(68vw, 310px); }
+:root[data-cs="none"] #stage .scover { display: none !important; }      /* 全画面ではジャケットを出さず、エフェクトだけ */
 
 /* シンプルスタイル: 白黒基調・角は控えめ・背景は動かさない */
 :root[data-style="simple"] {
@@ -310,6 +319,8 @@ input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent); height: 
 .gdots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
 .gdots i.on { background: var(--accent); width: 18px; border-radius: 4px; }
 .gbtns { display: flex; justify-content: space-between; align-items: center; }
+.gcred { margin-top: 12px; font-size: 11px; color: var(--muted); font-family: var(--font-mono); letter-spacing: .04em; }
+.lcred { padding: 14px 0 4px; text-align: center; font-size: 11px; color: var(--muted); font-family: var(--font-mono); letter-spacing: .04em; }
 .gbtns .skip { color: var(--muted); font-size: 13px; height: 40px; padding-inline: 8px; }
 
 .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 10px; color: var(--muted); padding: 24px 16px; border-radius: 18px; }
@@ -456,6 +467,7 @@ body.staging #veil { opacity: 0; }
         <button data-v="s">小</button>
         <button data-v="m">中</button>
         <button data-v="l">大</button>
+        <button data-v="none">なし</button>
       </div>
     </div>
     <div class="opt">
@@ -496,6 +508,7 @@ body.staging #veil { opacity: 0; }
     <div class="opt"><div class="ol"><span>暗さ</span><span id="ldimv"></span></div><input type="range" id="ldim" min="0" max="80" step="5"></div>
     <div class="opt"><div class="ol"><span>反応の大きさ</span><span id="lgainv"></span></div><input type="range" id="lgain" min="40" max="200" step="10"></div>
     <div class="opt"><label class="chk">メイン画面の背景にも使う<input type="checkbox" id="lmain"></label></div>
+    <div class="lcred">うさチルplayer © 2026 kiri.karasuba</div>
   </div>
 <div id="custombg" class="lookbg" hidden></div>
 <div id="stage" hidden>
@@ -620,8 +633,19 @@ body.staging #veil { opacity: 0; }
       im.onload = function () {
         try {
           var m = Math.min(1, 512 / Math.max(im.width, im.height)), w = Math.round(im.width * m), h = Math.round(im.height * m);
-          var c = document.createElement('canvas'); c.width = w; c.height = h;
-          c.getContext('2d').drawImage(im, 0, 0, w, h);
+          var c = document.createElement('canvas'), g = c.getContext('2d');
+          if (Math.abs(w - h) / Math.max(w, h) < .02) {
+            c.width = w; c.height = h; g.drawImage(im, 0, 0, w, h);
+          } else {
+            // 正方形でないジャケットは切らずに丸ごと入れ、余白はそのジャケットをぼかした絵で埋める
+            var S = Math.max(w, h), k = S / Math.min(w, h) * 1.1;
+            c.width = c.height = S;
+            g.filter = 'blur(' + Math.round(S / 24) + 'px) saturate(1.2)';
+            g.drawImage(im, (S - w * k) / 2, (S - h * k) / 2, w * k, h * k);
+            g.filter = 'none';
+            g.fillStyle = 'rgba(0,0,0,.12)'; g.fillRect(0, 0, S, S);
+            g.drawImage(im, (S - w) / 2, (S - h) / 2, w, h);
+          }
           URL.revokeObjectURL(u);
           c.toBlob(function (b) { res(b || blob); }, 'image/jpeg', 0.85);
         } catch (e) { URL.revokeObjectURL(u); res(blob); }
@@ -662,7 +686,7 @@ body.staging #veil { opacity: 0; }
       t.albumArtist = aa ? String(aa).trim() : '';
       if (tags.picture && tags.picture.data) {
         var b = new Blob([new Uint8Array(tags.picture.data)], { type: tags.picture.format || 'image/jpeg' });
-        return shrink(b).then(function (c) { if (c) { dropCover(t); t.cover = c; } });
+        return shrink(b).then(function (c) { if (c) { dropCover(t); t.cover = c; t.coverV = 2; } });
       }
     });
   }
@@ -1481,8 +1505,9 @@ body.staging #veil { opacity: 0; }
   function drawStage(dt) {
     var dpr = fit(viz), W = viz.width, H = viz.height, cx = W / 2, cy = H * .42;
     vg.clearRect(0, 0, W, H);
-    var sq = !$('#scover').hidden, cel = sq ? $('#scover') : $('#sph');
-    var half = (cel.offsetWidth || 220) / 2 * dpr;               // ジャケットの大きさ(小・中・大)に合わせる
+    var noArt = look.cs === 'none';
+    var sq = !noArt && !$('#scover').hidden, cel = sq ? $('#scover') : $('#sph');
+    var half = noArt ? Math.min(W * .2, 95 * dpr) : (cel.offsetWidth || 220) / 2 * dpr;   // ジャケットの大きさ(小・中・大・なし)に合わせる
     var R = half * (1 + pulse * .06);
     var Rb = sq ? R * 1.47 : R;                                  // 四角いジャケットの角に輪が隠れないように
     // 光の粒
@@ -1525,9 +1550,10 @@ body.staging #veil { opacity: 0; }
       // ほわほわ: 音に合わせてふくらむ柔らかい輪
       for (var k = 0; k < 3; k++) {
         vg.beginPath();
-        for (var a2 = 0; a2 <= BINS; a2++) {
-          var lv3 = lv(a2 % BINS), ang2 = (a2 / BINS) * Math.PI * 2;
-          var rr = Rb + (18 + k * 22) * dpr + lv3 * (50 + k * 25) * dpr + Math.sin(vt * 1.5 + a2 * .4 + k) * 4 * dpr;
+        for (var a2 = 0; a2 <= BINS * 2; a2++) {
+          // 低い音→高い音→低い音と左右対称に並べて、一周してもつなぎ目ができないようにする
+          var m2 = a2 % (BINS * 2), lv3 = lv(m2 < BINS ? m2 : BINS * 2 - 1 - m2), ang2 = (a2 / (BINS * 2)) * Math.PI * 2 - Math.PI / 2;
+          var rr = Rb + (18 + k * 22) * dpr + lv3 * (50 + k * 25) * dpr + Math.sin(vt * 1.5 + ang2 * 3 + k) * 4 * dpr;
           var x2 = cx + Math.cos(ang2) * rr, y2 = cy + Math.sin(ang2) * rr;
           if (a2) vg.lineTo(x2, y2); else vg.moveTo(x2, y2);
         }
@@ -1699,7 +1725,8 @@ body.staging #veil { opacity: 0; }
     var g = GUIDE[gStep], last = gStep === GUIDE.length - 1, dots = '';
     for (var i = 0; i < GUIDE.length; i++) dots += '<i' + (i === gStep ? ' class="on"' : '') + '></i>';
     $('#gcard').innerHTML = '<div class="gi">' + g.icon + '</div><h3>' + g.t + '</h3><p>' + g.p + '</p><div class="gdots">' + dots + '</div>' +
-      '<div class="gbtns"><button class="skip" data-a="skip">' + (last ? '' : 'スキップ') + '</button><button class="pill" data-a="next">' + (last ? 'はじめる' : '次へ') + '</button></div>';
+      '<div class="gbtns"><button class="skip" data-a="skip">' + (last ? '' : 'スキップ') + '</button><button class="pill" data-a="next">' + (last ? 'はじめる' : '次へ') + '</button></div>' +
+      '<div class="gcred">うさチルplayer © 2026 kiri.karasuba</div>';
   }
   function openGuide() { gStep = 0; renderGuide(); $('#guide').hidden = false; }
   function closeGuide() { $('#guide').hidden = true; lsSet('guided', '1'); }
@@ -1741,7 +1768,7 @@ body.staging #veil { opacity: 0; }
         t.trackNo = parseInt($('#edNo').value, 10) || 0;
         t.discNo = parseInt($('#edDisc').value, 10) || 0;
         t.lyrics = $('#edLyr').value;
-        if (pendingCover) { dropCover(t); t.cover = pendingCover; }
+        if (pendingCover) { dropCover(t); t.cover = pendingCover; t.coverV = 2; }
         t.edited = true; pendingCover = null;
         tx(function (s) { return s.put(t); });
         closePanel(); afterEdit(t);
@@ -1773,7 +1800,7 @@ body.staging #veil { opacity: 0; }
         var name = $('#edAlbum').value.trim(), aa = $('#edAA').value.trim();
         al.tracks.forEach(function (t) {
           t.album = name; t.albumArtist = aa; t.edited = true;
-          if (pendingCover) { dropCover(t); t.cover = pendingCover; }
+          if (pendingCover) { dropCover(t); t.cover = pendingCover; t.coverV = 2; }
         });
         tx(function (s) { al.tracks.forEach(function (t) { s.put(t); }); });
         closePanel();
@@ -1861,6 +1888,20 @@ body.staging #veil { opacity: 0; }
     tracks = all.concat(extra);
     renderList(); renderNow();
     all.forEach(function (t) { if (t.tagVer !== TAGV) queueEnrich(t); });
+    // 保存済みの正方形でないジャケットを、見切れない形に作り直す(1回だけ)
+    var fixQ = Promise.resolve();
+    all.forEach(function (t) {
+      if (!t.cover || t.coverV === 2) return;
+      fixQ = fixQ.then(function () {
+        return shrink(t.cover).then(function (c) {
+          t.coverV = 2;
+          if (c) { dropCover(t); t.cover = c; }
+          tx(function (st) { return st.put(t); });
+          scheduleRender();
+          if (tracks[cur] === t) { shownCover = undefined; renderNow(); mediaMeta(); }
+        });
+      }).catch(function () {});
+    });
   });
 })();
 </script>
