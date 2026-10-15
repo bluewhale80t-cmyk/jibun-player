@@ -245,6 +245,21 @@ input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent); height: 
 .panel input[type=text] { width: 100%; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--glass); color: var(--fg); padding-inline: 12px; font: inherit; margin: 6px 0 12px; }
 .prow { display: flex; gap: 8px; justify-content: flex-end; }
 
+/* かわいいの色テーマ */
+#deco { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+#deco svg { position: absolute; fill: currentColor; transform: translate(-50%, -50%) rotate(var(--rot, 0deg)); animation: floaty 10s ease-in-out infinite alternate; }
+@keyframes floaty { from { transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) translateY(0); } to { transform: translate(-50%, -50%) rotate(calc(var(--rot, 0deg) * -1)) translateY(-18px); } }
+@media (prefers-reduced-motion: reduce) { #deco svg { animation: none; } }
+body.staging #deco { display: none; }
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+.tile { display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; border: 2px solid transparent; box-shadow: 0 1px 4px rgb(0 0 0 / .12); }
+.tile[aria-pressed="true"] { border-color: var(--accent); }
+.tile .tbg { aspect-ratio: 1.15; display: grid; place-items: center; }
+.tile .tbg svg { width: 42%; height: 42%; fill: currentColor; }
+.tile .tband { padding: 4px 2px 5px; font-size: 11px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgb(0 0 0 / .18); line-height: 1.25; display: flex; flex-direction: column; align-items: center; }
+.tile .tband small { font-size: 9px; font-weight: 500; opacity: .95; }
+.tile[data-t="white"] .tband, .tile[data-t="yellow"] .tband, .tile[data-t="mint"] .tband, .tile[data-t="auto"] .tband { color: #5a5560; text-shadow: none; }
+
 /* ジャケットの大きさ(小・中・大) */
 :root[data-cs="s"] .art { width: 64px; height: 64px; }
 :root[data-cs="l"] .art { width: 116px; height: 116px; }
@@ -341,7 +356,7 @@ body.staging .app { visibility: hidden; }
 .lookbg .lk.grad { inset: 0; background-size: 200% 200%; animation: flow 24s ease-in-out infinite alternate; }
 @keyframes flow { from { background-position: 0% 0%; } to { background-position: 100% 100%; } }
 #custombg { position: fixed; inset: 0; z-index: -1; }
-#sveil { position: absolute; inset: 0; background: radial-gradient(circle at 50% 42%, rgb(8 4 12 / calc(var(--dim, .35) * .4)), rgb(8 4 12 / var(--dim, .35))); }
+#sveil { position: absolute; inset: 0; background: radial-gradient(circle at 50% 42%, rgb(var(--veilc, 8 4 12) / calc(var(--dim, .35) * .4)), rgb(var(--veilc, 8 4 12) / var(--dim, .35))); }
 @media (prefers-reduced-motion: reduce) { .lookbg .lk { animation: none !important; } }
 .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; margin-inline: auto; max-width: 560px; max-height: 72%; overflow-y: auto; color: var(--fg); border-radius: 22px 22px 0 0; padding: 8px 16px max(18px, env(safe-area-inset-bottom)); background: var(--glass-strong); -webkit-backdrop-filter: blur(22px) saturate(1.3); backdrop-filter: blur(22px) saturate(1.3); border-top: 1px solid var(--line); }
 .sheet .grab { width: 40px; height: 4px; border-radius: 2px; background: var(--line); margin: 4px auto 10px; }
@@ -367,6 +382,10 @@ body.staging #veil { opacity: 0; }
 .sinfo { position: relative; width: 100%; max-width: 520px; padding: 0 20px max(24px, env(safe-area-inset-bottom)); text-align: center; }
 .sinfo .st { font-size: 20px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 2px 12px rgb(0 0 0 / .4); }
 .sinfo .sa { font-size: 14px; opacity: .85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.svol { display: flex; align-items: center; gap: 8px; max-width: 300px; margin: 12px auto 0; }
+.svol .vbtn { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: #fff; flex: none; }
+.svol .vbtn svg { width: 20px; height: 20px; fill: currentColor; }
+.svol input[type=range] { flex: 1; accent-color: #fff; height: 24px; }
 .sctrls { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 16px; }
 .sctrls .ico { color: #fff; }
 .sctrls .play { background: #fff; color: #1a0e1c; box-shadow: 0 6px 24px rgb(0 0 0 / .35); }
@@ -472,6 +491,7 @@ body.staging #veil { opacity: 0; }
         <button data-v="scene">けしき</button>
         <button data-v="mono">単色</button>
       </div>
+      <div class="tiles" id="ltheme"></div>
       <div class="chips sub" id="lscene" style="margin-top:10px">
         <button data-v="yozora"><span class="sw" style="background:linear-gradient(135deg,#3a2d6b,#0d0b1e)"></span>夜空</button>
         <button data-v="umi"><span class="sw" style="background:linear-gradient(135deg,#0b3d5c,#7fd3e0)"></span>海</button>
@@ -479,11 +499,9 @@ body.staging #veil { opacity: 0; }
         <button data-v="mori"><span class="sw" style="background:linear-gradient(135deg,#1f4d3a,#b8e0a8)"></span>森</button>
       </div>
       <div class="chips sub" id="lmono" style="margin-top:10px">
-        <button data-c="#ffd6e7"><span class="sw" style="background:#ffd6e7"></span>さくら</button>
-        <button data-c="#d6ecff"><span class="sw" style="background:#d6ecff"></span>そら</button>
-        <button data-c="#d9f5e4"><span class="sw" style="background:#d9f5e4"></span>ミント</button>
-        <button data-c="#e6dcff"><span class="sw" style="background:#e6dcff"></span>ラベンダー</button>
-        <button data-c="#2b2a33"><span class="sw" style="background:#2b2a33"></span>すみ</button>
+        <button data-c="#f7f7f8"><span class="sw" style="background:#f7f7f8"></span>白</button>
+        <button data-c="#1c1c20"><span class="sw" style="background:#1c1c20"></span>黒</button>
+        <button data-c="custom" id="lmonoc">自分で選ぶ</button>
         <input type="color" id="lcolor" value="#ffc6de" aria-label="単色の色">
       </div>
     </div>
@@ -527,10 +545,12 @@ body.staging #veil { opacity: 0; }
     <div class="opt"><div class="ol"><span>背景のぼかし</span><span id="lblurv"></span></div><input type="range" id="lblur" min="0" max="60" step="2"></div>
     <div class="opt"><div class="ol"><span>暗さ</span><span id="ldimv"></span></div><input type="range" id="ldim" min="0" max="80" step="5"></div>
     <div class="opt"><div class="ol"><span>反応の大きさ</span><span id="lgainv"></span></div><input type="range" id="lgain" min="40" max="200" step="10"></div>
+    <div class="opt"><label class="chk">メイン画面でも音に合わせて動かす<input type="checkbox" id="lmainfx"></label></div>
     <div class="opt" id="optmain"><label class="chk">メイン画面の背景にも使う<input type="checkbox" id="lmain"></label></div>
     <div class="lcred">うさチルplayer © 2026 kiri.karasuba</div>
   </div>
 <div id="custombg" class="lookbg" hidden></div>
+<div id="deco" hidden></div>
 <div id="stage" hidden>
   <div id="sbg" class="lookbg"></div>
   <div id="sveil"></div>
@@ -545,6 +565,10 @@ body.staging #veil { opacity: 0; }
   <div class="sinfo">
     <div class="st" id="stitle"></div>
     <div class="sa" id="sartist"></div>
+    <div class="svol">
+      <button class="vbtn" id="smute" aria-label="ミュート"><svg viewBox="0 0 24 24" id="svolIco"></svg></button>
+      <input id="svol" type="range" min="0" max="100" step="1" value="100" aria-label="音量">
+    </div>
     <div class="sctrls">
       <button class="ico" id="slyrbtn" aria-label="歌詞"><svg viewBox="0 0 24 24"><path d="M4 5h11v2H4zm0 4h11v2H4zm0 4h7v2H4zm12.5-4v6.3A2.8 2.8 0 1 0 18 18V11h3V9z"/></svg></button>
       <button class="ico" id="sprev" aria-label="前の曲"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
@@ -1014,6 +1038,7 @@ body.staging #veil { opacity: 0; }
     jH = h; jS = s;
     if (typeof look !== 'undefined' && look) {
       if (look.style === 'scene' && SCENE_HUE[look.scene]) { h = SCENE_HUE[look.scene][0]; s = SCENE_HUE[look.scene][1]; }
+      else if (look.style === 'cute' && typeof THEMES !== 'undefined' && THEMES[look.theme]) { h = THEMES[look.theme].hue[0]; s = THEMES[look.theme].hue[1]; }
       else if (look.style === 'mono') { var c = hexHue(look.color); h = c.h; s = c.s < 10 ? 6 : Math.max(45, Math.min(80, c.s)); }
     }
     accH = h; accS = s;
@@ -1388,7 +1413,7 @@ body.staging #veil { opacity: 0; }
 
   /* ---- 見た目の設定(エフェクト画面の背景・光の色など) ---- */
   var LOOK_DEF = { bg: 'jacket', color: '#ffc6de', glow: 'auto', glowColor: '#ff8fc2', parts: 70, blur: 42, dim: 35, gain: 100, main: false, image: '',
-                   style: 'cute', cs: 'm', fx: 'white', fxColor: '#ffffff', scene: 'yozora' };
+                   style: 'cute', cs: 'm', fx: 'white', fxColor: '#ffffff', scene: 'yozora', theme: 'auto', mainFx: false };
   var look = Object.assign({}, LOOK_DEF);
   try { Object.assign(look, JSON.parse(lsGet('look') || '{}')); } catch (e) {}
   // 前の版で背景にしていた 夜空・海・夕焼け・森・単色 は、スタイルのほうへ移した
@@ -1400,6 +1425,7 @@ body.staging #veil { opacity: 0; }
   function effBg() {
     if (look.style === 'scene') return SCENE_HUE[look.scene] ? look.scene : 'yozora';
     if (look.style === 'mono') return 'color';
+    if (curTheme()) return 'theme';
     return look.bg;
   }
   function lum(c) { return .299 * parseInt(c.substr(1, 2), 16) + .587 * parseInt(c.substr(3, 2), 16) + .114 * parseInt(c.substr(5, 2), 16); }
@@ -1416,6 +1442,7 @@ body.staging #veil { opacity: 0; }
     if (bg === 'jacket') imgUrl = u;
     else if (bg === 'image') imgUrl = look.image || u;
     else if (bg === 'color') { css = look.color; }
+    else if (bg === 'theme') { css = curTheme().bg; grad = true; }
     else { css = GRADS[bg] || GRADS.yume; grad = true; }
     var bgCss = imgUrl ? 'url("' + imgUrl + '")' : (css || GRADS.yume);
     if (!imgUrl && !css) grad = true;
@@ -1429,7 +1456,7 @@ body.staging #veil { opacity: 0; }
   function applyLook() {
     paintLook($('#sbg'));
     $('#stage').style.setProperty('--dim', (look.dim / 100).toFixed(2));
-    var styled = look.style === 'scene' || look.style === 'mono', bg = effBg();
+    var styled = look.style === 'scene' || look.style === 'mono' || !!curTheme(), bg = effBg();
     var useMain = styled || (look.main && bg !== 'jacket');
     $('#custombg').hidden = !useMain;
     if (useMain) paintLook($('#custombg'));
@@ -1439,13 +1466,23 @@ body.staging #veil { opacity: 0; }
       if (bg === 'yume') tone = 'light';
       else if (GRADS[bg]) tone = 'dark';
       else if (bg === 'color') tone = lum(look.color) > 150 ? 'light' : 'dark';
+      else if (bg === 'theme') tone = 'light';
     }
+    $('#ltheme').hidden = look.style !== 'cute';
+    $$('#ltheme .tile').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.t === (THEMES[look.theme] ? look.theme : 'auto')); });
+    renderDeco();
+    var thv = curTheme();
+    if (thv) {   // 明るいテーマでは、黒ではなくテーマの色を濃くした幕にして、灰色っぽくならないようにする
+      var dc = thv.deco, k = .42;
+      $('#stage').style.setProperty('--veilc', Math.round(parseInt(dc.substr(1, 2), 16) * k) + ' ' + Math.round(parseInt(dc.substr(3, 2), 16) * k) + ' ' + Math.round(parseInt(dc.substr(5, 2), 16) * k));
+    } else $('#stage').style.removeProperty('--veilc');
     // スタイルごとに、出す項目を切り替える
     $('#lscene').hidden = look.style !== 'scene';
     $('#lmono').hidden = look.style !== 'mono';
     $('#optbg').hidden = styled; $('#optmain').hidden = styled;
     $$('#lscene button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.v === look.scene); });
-    $$('#lmono button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.c === look.color); });
+    var preset = look.color === '#f7f7f8' || look.color === '#1c1c20';
+    $$('#lmono button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.c === 'custom' ? !preset : b.dataset.c === look.color); });
     applyColor(jH, jS);
     if (tone) document.documentElement.setAttribute('data-theme', tone); else document.documentElement.removeAttribute('data-theme');
     // 設定パネルの表示
@@ -1457,6 +1494,8 @@ body.staging #veil { opacity: 0; }
     $('#ldim').value = look.dim; $('#ldimv').textContent = look.dim + '%';
     $('#lgain').value = look.gain; $('#lgainv').textContent = look.gain + '%';
     $('#lmain').checked = look.main;
+    $('#lmainfx').checked = look.mainFx;
+    $('#ring').hidden = !look.mainFx;
     document.documentElement.setAttribute('data-style', look.style);
     document.documentElement.setAttribute('data-cs', look.cs);
     $$('#lstyle button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.v === look.style); });
@@ -1528,6 +1567,8 @@ body.staging #veil { opacity: 0; }
     }
     return 'rgba(255,255,255,' + a + ')';
   }
+  // となり同士をならして、1本だけ飛び出す・へこむのを防ぐ
+  function lvs(i) { var a = lv(Math.max(0, i - 1)), b = lv(i), c = lv(Math.min(BINS - 1, i + 1)); return (a + b * 2 + c) / 4; }
   function lv(i) { return Math.min(1, levels[i] * (look.gain || 100) / 100); }
   var colA = '', colB = '', colTick = 0;
   function drawRing() {
@@ -1554,13 +1595,18 @@ body.staging #veil { opacity: 0; }
     var R = half * (1 + pulse * .06);
     var Rb = sq ? R * 1.47 : R;                                  // 四角いジャケットの角に輪が隠れないように
     // 光の粒
-    if (parts.length < look.parts) parts.push({ a: Math.random() * Math.PI * 2, d: R, v: .3 + Math.random() * .7, s: 1 + Math.random() * 2.5, life: 0 });
+    if (parts.length < look.parts) parts.push({ a: Math.random() * Math.PI * 2, d: R, v: .3 + Math.random() * .7, s: 1 + Math.random() * 2.5, life: 0, k: Math.floor(Math.random() * 3), rot: Math.random() * 6.28 });
+    var th = curTheme();
     vg.globalCompositeOperation = 'lighter';
     parts.forEach(function (p) {
       p.d += (20 + pulse * 260) * p.v * dt * dpr; p.life += dt;
       var x = cx + Math.cos(p.a) * p.d, y = cy + Math.sin(p.a) * p.d, al = Math.max(0, 1 - p.d / (Math.max(W, H) * .7));
       vg.fillStyle = fx(al * .8, p.a * 20);
-      vg.beginPath(); vg.arc(x, y, p.s * dpr * (1 + pulse), 0, Math.PI * 2); vg.fill();
+      var shape = th && motifPath(th.motifs[p.k % th.motifs.length]);
+      if (shape) {
+        var sc = (5 + p.s * 3.2) * dpr * (1 + pulse * .6) / 24;
+        vg.save(); vg.translate(x, y); vg.rotate(p.rot + p.life * .4); vg.scale(sc, sc); vg.translate(-12, -12); vg.fill(shape); vg.restore();
+      } else { vg.beginPath(); vg.arc(x, y, p.s * dpr * (1 + pulse), 0, Math.PI * 2); vg.fill(); }
       if (al <= 0) { p.d = R; p.a = Math.random() * Math.PI * 2; }
     });
     // 中心の光
@@ -1572,8 +1618,13 @@ body.staging #veil { opacity: 0; }
     if (lyrOpen) return;                          // 歌詞を出している間は、文字が読みやすいよう輪やバーは描かない
     if (vizMode === 'ring') {
       vg.lineCap = 'round'; vg.lineWidth = Math.max(2, (Math.PI * 2 * R / BINS) * .45);
+      if (noArt) {
+        vg.beginPath(); vg.arc(cx, cy, Rb + 10 * dpr, 0, Math.PI * 2);
+        vg.strokeStyle = fx(.35, 0); vg.lineWidth = 1.5 * dpr; vg.stroke();
+        vg.lineWidth = Math.max(2, (Math.PI * 2 * R / BINS) * .45);
+      }
       for (var i = 0; i < BINS * 2; i++) {
-        var lv1 = lv(i < BINS ? i : BINS * 2 - 1 - i), ang = (i / (BINS * 2)) * Math.PI * 2 - Math.PI / 2;
+        var bi = i < BINS ? i : BINS * 2 - 1 - i, lv1 = Math.min(1, lvs(bi) * (1 + bi / BINS * .8) + (noArt ? .04 : 0)), ang = (i / (BINS * 2)) * Math.PI * 2 - Math.PI / 2;
         var r1 = Rb + 10 * dpr, room = Math.max(16 * dpr, Math.min(90 * dpr, W / 2 - r1 - 8 * dpr)), r2 = r1 + 6 * dpr + lv1 * room;
         vg.strokeStyle = fx(.55 + lv1 * .45, i);
         vg.beginPath(); vg.moveTo(cx + Math.cos(ang) * r1, cy + Math.sin(ang) * r1); vg.lineTo(cx + Math.cos(ang) * r2, cy + Math.sin(ang) * r2); vg.stroke();
@@ -1610,9 +1661,9 @@ body.staging #veil { opacity: 0; }
     var dt = Math.min(.05, (t - lastT) / 1000 || .016); lastT = t;
     sample(dt);
     if (--colTick <= 0) { colTick = 30; colA = look.style === 'simple' ? getComputedStyle(document.documentElement).getPropertyValue('--fg').trim() || '#888' : accentRGB(matchMedia('(prefers-color-scheme: dark)').matches ? 72 : 50, .9); }
-    if (!reduce) document.getElementById('bg').style.setProperty('--pulse', pulse.toFixed(3));
+    if (!reduce) document.getElementById('bg').style.setProperty('--pulse', look.mainFx || stageOpen ? pulse.toFixed(3) : 0);
     $('#scover').style.setProperty('--pulse', pulse.toFixed(3));
-    drawRing();
+    if (look.mainFx && !stageOpen) drawRing();
     if (stageOpen) { drawStage(dt); tickLyrics(); }
     requestAnimationFrame(frame);
   }
@@ -1634,6 +1685,63 @@ body.staging #veil { opacity: 0; }
   if (!MODES[vizMode]) vizMode = 'ring';
   renderMode();
 
+  /* ---- かわいいの色テーマ(色ごとに部屋の雰囲気を変える) ---- */
+  var MOTIF = {
+    heart:   'M12 20C6 15.5 3 12.6 3 9.2 3 6.8 4.9 5 7.2 5c1.9 0 3.4 1 4.8 2.8C13.4 6 14.9 5 16.8 5 19.1 5 21 6.8 21 9.2c0 3.4-3 6.3-9 10.8z',
+    ribbon:  'M12 10.5C10 7.5 5.5 5.3 3.8 7.2c-1.7 2 .2 5.4 3.7 4.6L5 18.5l3-.8 1.6 2.3L12 13l2.4 7 1.6-2.3 3 .8-2.5-6.7c3.5.8 5.4-2.6 3.7-4.6-1.7-1.9-6.2.3-8.2 3.3z',
+    sparkle: 'M12 2c.7 5.2 2.3 6.8 7.5 7.5-5.2.7-6.8 2.3-7.5 7.5-.7-5.2-2.3-6.8-7.5-7.5C9.7 8.8 11.3 7.2 12 2zm7 13c.3 2.1.9 2.7 3 3-2.1.3-2.7.9-3 3-.3-2.1-.9-2.7-3-3 2.1-.3 2.7-.9 3-3z',
+    cloud:   'M7 18.5a4.3 4.3 0 0 1-.7-8.5A5.8 5.8 0 0 1 17.3 8.6a4.9 4.9 0 0 1 .2 9.9z',
+    moon:    'M14.5 3a9 9 0 1 0 6.8 14.9A7.6 7.6 0 0 1 14.5 3z',
+    star:    'M12 2.5l2.8 6.2 6.7.7-5 4.6 1.4 6.7L12 17.3l-5.9 3.4 1.4-6.7-5-4.6 6.7-.7z',
+    crystal: 'M12 2l5.5 6.5L12 22 6.5 8.5zM12 2v20M6.5 8.5h11',
+    flower:  'M12 3.5c1.9 0 3 1.5 3 3.2 1.7 0 3.2 1.1 3.2 3s-1.5 3-3.2 3c0 1.7-1.1 3.2-3 3.2s-3-1.5-3-3.2c-1.7 0-3.2-1.1-3.2-3s1.5-3 3.2-3c0-1.7 1.1-3.2 3-3.2zm0 4.9a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z',
+    leaf:    'M4.5 19.5C4.5 10.5 10.5 4.5 20 4.5c0 9.5-6 15-15.5 15zm0 0L13 11',
+    drop:    'M12 3s6.2 7 6.2 11.2a6.2 6.2 0 0 1-12.4 0C5.8 10 12 3 12 3z',
+    pad:     'M7.2 8h9.6a5 5 0 0 1 4.7 6.9l-1 2.4a2.5 2.5 0 0 1-4.2.6L14.5 16h-5l-1.8 1.9a2.5 2.5 0 0 1-4.2-.6l-1-2.4A5 5 0 0 1 7.2 8z',
+    hex:     'M12 2.8l8 4.6v9.2l-8 4.6-8-4.6V7.4z',
+    sun:     'M12 7.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zM11 1.5h2v3.5h-2zm0 17.5h2v3.5h-2zM1.5 11h3.5v2H1.5zm17.5 0h3.5v2H19z'
+  };
+  var THEMES = {
+    pink:   { name: 'Pink',      jp: 'スイーツ',     band: '#ffb3b8', bg: 'linear-gradient(160deg,#ffe8ee,#ffd3dd 45%,#f9c9d3 75%,#fff2f5)', hue: [345, 72], deco: '#ff8fab', motifs: ['heart', 'ribbon', 'sparkle'] },
+    blue:   { name: 'Blue',      jp: '雲の上',       band: '#9fd0f7', bg: 'linear-gradient(180deg,#c9e4ff,#dfefff 45%,#f3f8ff)', hue: [210, 75], deco: '#7fb6ff', motifs: ['cloud', 'moon', 'star'] },
+    white:  { name: 'White',     jp: 'クリスタル',   band: '#e6e6ea', bg: 'linear-gradient(160deg,#ffffff,#f3f1f8 50%,#ecf1fa)', hue: [255, 32], deco: '#b9b2e6', motifs: ['crystal', 'sparkle', 'moon'] },
+    beige:  { name: 'Beige',     jp: 'ドライフラワー', band: '#e3c3a8', bg: 'linear-gradient(160deg,#f7eee3,#ecdcc8 55%,#f9f2ea)', hue: [26, 45], deco: '#c79f78', motifs: ['flower', 'leaf'] },
+    mint:   { name: 'MintGreen', jp: 'グリーン',     band: '#c8eea2', bg: 'linear-gradient(160deg,#e9f9ef,#d4f3e2 50%,#f3fcf7)', hue: [150, 50], deco: '#73c99e', motifs: ['leaf', 'drop'] },
+    purple: { name: 'Purple',    jp: 'レトロポップ', band: '#c99cf0', bg: 'linear-gradient(160deg,#eee4ff,#dccbff 50%,#f5efff)', hue: [268, 65], deco: '#a77bff', motifs: ['star', 'pad', 'flower'] },
+    yellow: { name: 'Yellow',    jp: 'ひだまり',     band: '#fbee6b', bg: 'linear-gradient(160deg,#fff9dc,#ffefa6 50%,#fffaf0)', hue: [38, 88], deco: '#f2c230', motifs: ['hex', 'sun', 'flower'] }
+  };
+  var motifPaths = {};
+  function motifPath(k) { if (!motifPaths[k]) { try { motifPaths[k] = new Path2D(MOTIF[k]); } catch (e) { motifPaths[k] = null; } } return motifPaths[k]; }
+  function curTheme() { return look.style === 'cute' && THEMES[look.theme] ? THEMES[look.theme] : null; }
+  // 背景にふわふわ漂う小物(テーマごと)
+  var decoKey = '';
+  function renderDeco() {
+    var th = curTheme(), el = $('#deco'), key = th ? look.theme : '';
+    el.hidden = !th;
+    if (key === decoKey) return;
+    decoKey = key;
+    if (!th) { el.innerHTML = ''; return; }
+    var html = '', seed = 7;
+    function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+    for (var i = 0; i < 22; i++) {
+      var m = th.motifs[i % th.motifs.length], sz = 22 + rnd() * 40, x = i % 3 === 0 ? (rnd() < .5 ? rnd() * 12 : 88 + rnd() * 12) : rnd() * 100, y = rnd() * 100;
+      html += '<svg viewBox="0 0 24 24" style="left:' + x.toFixed(1) + '%;top:' + y.toFixed(1) + '%;width:' + sz.toFixed(0) + 'px;height:' + sz.toFixed(0) + 'px;' +
+        'color:' + th.deco + ';opacity:' + (.45 + rnd() * .4).toFixed(2) + ';animation-duration:' + (7 + rnd() * 8).toFixed(1) + 's;animation-delay:-' + (rnd() * 8).toFixed(1) + 's;--rot:' + ((rnd() - .5) * 40).toFixed(0) + 'deg">' +
+        '<path d="' + MOTIF[m] + '"' + (m === 'leaf' || m === 'crystal' ? ' stroke="currentColor" stroke-width=".8" stroke-linejoin="round"' : '') + '/></svg>';
+    }
+    el.innerHTML = html;
+  }
+  function renderThemeTiles() {
+    var html = '<button class="tile" data-t="auto"><span class="tbg" style="background:conic-gradient(from 210deg,#ffd1dc,#cfe7ff,#d4f3e2,#fff1b0,#e3d3ff,#ffd1dc)"><svg viewBox="0 0 24 24">' + ICON_DISC + '</svg></span><span class="tband" style="background:var(--accent-soft)">おまかせ<small>ジャケットの色</small></span></button>';
+    Object.keys(THEMES).forEach(function (k) {
+      var t = THEMES[k];
+      html += '<button class="tile" data-t="' + k + '"><span class="tbg" style="background:' + t.bg + ';color:' + t.deco + '"><svg viewBox="0 0 24 24"><path d="' + MOTIF[t.motifs[0]] + '"/></svg></span>' +
+        '<span class="tband" style="background:' + t.band + '">' + t.name + '<small>' + t.jp + '</small></span></button>';
+    });
+    $('#ltheme').innerHTML = html;
+  }
+  renderThemeTiles();
+  $('#ltheme').addEventListener('click', function (e) { var b = e.target.closest('.tile'); if (!b) return; look.theme = b.dataset.t; saveLook(); applyLook(); });
   $('#slook').onclick = function () { $('#sheet').hidden = !$('#sheet').hidden; };
   $('#tlook').onclick = function () { $('#sheet').hidden = !$('#sheet').hidden; };
   $('#lclose').onclick = function () { $('#sheet').hidden = true; };
@@ -1645,7 +1753,11 @@ body.staging #veil { opacity: 0; }
   });
   $('#lcolor').addEventListener('input', function (e) { look.color = e.target.value; look.style = 'mono'; saveLook(); applyLook(); });
   $('#lscene').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; look.scene = b.dataset.v; saveLook(); applyLook(); });
-  $('#lmono').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; look.color = b.dataset.c; $('#lcolor').value = look.color; saveLook(); applyLook(); });
+  $('#lmono').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.c === 'custom') { $('#lcolor').click(); return; }
+    look.color = b.dataset.c; $('#lcolor').value = look.color; saveLook(); applyLook();
+  });
   $('#limage').addEventListener('change', function (e) {
     var f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
     var u = URL.createObjectURL(f), im = new Image();
@@ -1664,6 +1776,7 @@ body.staging #veil { opacity: 0; }
     $(p[0]).addEventListener('input', function (e) { look[p[1]] = +e.target.value; saveLook(); applyLook(); });
   });
   $('#lmain').addEventListener('change', function (e) { look.main = e.target.checked; saveLook(); applyLook(); });
+  $('#lmainfx').addEventListener('change', function (e) { look.mainFx = e.target.checked; saveLook(); applyLook(); });
   [['#lstyle', 'style'], ['#lcs', 'cs'], ['#lfx', 'fx']].forEach(function (p) {
     $(p[0]).addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; look[p[1]] = b.dataset.v; saveLook(); applyLook(); });
   });
@@ -1768,13 +1881,13 @@ body.staging #veil { opacity: 0; }
   function applyVol() {
     var v = muted ? 0 : vol, g = Math.pow(v / 100, 2);          // 耳の感じ方に合わせて、小さい音量側を細かく
     [audio, spare].forEach(function (el) { el.volume = g; });
-    $('#vol').value = v; $('#volv').textContent = v;
-    $('#volIco').innerHTML = v === 0 ? VOL_ICONS.mute : v < 50 ? VOL_ICONS.low : VOL_ICONS.high;
+    $('#vol').value = v; $('#volv').textContent = v; $('#svol').value = v;
+    $('#volIco').innerHTML = $('#svolIco').innerHTML = v === 0 ? VOL_ICONS.mute : v < 50 ? VOL_ICONS.low : VOL_ICONS.high;
     $('#mute').setAttribute('aria-label', muted ? 'ミュートを解除' : 'ミュート');
     lsSet('vol', String(vol)); lsSet('muted', muted ? '1' : '');
   }
-  $('#vol').addEventListener('input', function (e) { vol = +e.target.value; muted = false; if (vol) volBefore = vol; applyVol(); });
-  $('#mute').onclick = function () {
+  ['#vol', '#svol'].forEach(function (id) { $(id).addEventListener('input', function (e) { vol = +e.target.value; muted = false; if (vol) volBefore = vol; applyVol(); }); });
+  $('#mute').onclick = $('#smute').onclick = function () {
     if (muted || vol === 0) { muted = false; if (!vol) vol = volBefore || 60; } else muted = true;
     applyVol();
   };
