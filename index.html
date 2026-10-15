@@ -150,6 +150,11 @@ svg { display: block; fill: currentColor; }
 .seek span:last-child { text-align: right; }
 input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent); height: 28px; margin: 0; }
 
+.vol { display: flex; align-items: center; gap: 8px; margin-top: -6px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.vol .vbtn { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); flex: none; }
+.vol .vbtn svg { width: 20px; height: 20px; }
+.vol input[type=range] { height: 24px; }
+.vol span { width: 28px; text-align: right; flex: none; font-variant-numeric: tabular-nums; }
 .ctrls { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .ico { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; }
 .ico svg { width: 24px; height: 24px; }
@@ -408,6 +413,11 @@ body.staging #veil { opacity: 0; }
       <input id="bar" type="range" min="0" max="1" step="0.1" value="0" aria-label="再生位置">
       <span id="dur">0:00</span>
     </div>
+    <div class="vol">
+      <button class="vbtn" id="mute" aria-label="ミュート"><svg viewBox="0 0 24 24" id="volIco"></svg></button>
+      <input id="vol" type="range" min="0" max="100" step="1" value="100" aria-label="音量">
+      <span id="volv">100</span>
+    </div>
     <div class="ctrls">
       <button class="ico mode" id="shuffle" aria-label="シャッフル" aria-pressed="false">
         <svg viewBox="0 0 24 24"><path d="M17 3l4 4-4 4V8h-2.6l-3.1 4.4-1.6-1.1L12.9 6H17zM3 7h4.4l2.3 3.3-1.2 1.7L6.3 9H3zM17 13l4 4-4 4v-3h-4.1l-2.4-3.4 1.2-1.7L13.8 16H17zM3 15h3.3l2 2.8-1.2 1.7L5.2 17H3z"/></svg>
@@ -459,6 +469,22 @@ body.staging #veil { opacity: 0; }
       <div class="chips" id="lstyle">
         <button data-v="cute">かわいい</button>
         <button data-v="simple">シンプル</button>
+        <button data-v="scene">けしき</button>
+        <button data-v="mono">単色</button>
+      </div>
+      <div class="chips sub" id="lscene" style="margin-top:10px">
+        <button data-v="yozora"><span class="sw" style="background:linear-gradient(135deg,#3a2d6b,#0d0b1e)"></span>夜空</button>
+        <button data-v="umi"><span class="sw" style="background:linear-gradient(135deg,#0b3d5c,#7fd3e0)"></span>海</button>
+        <button data-v="yuyake"><span class="sw" style="background:linear-gradient(135deg,#c2477a,#ffb36b)"></span>夕焼け</button>
+        <button data-v="mori"><span class="sw" style="background:linear-gradient(135deg,#1f4d3a,#b8e0a8)"></span>森</button>
+      </div>
+      <div class="chips sub" id="lmono" style="margin-top:10px">
+        <button data-c="#ffd6e7"><span class="sw" style="background:#ffd6e7"></span>さくら</button>
+        <button data-c="#d6ecff"><span class="sw" style="background:#d6ecff"></span>そら</button>
+        <button data-c="#d9f5e4"><span class="sw" style="background:#d9f5e4"></span>ミント</button>
+        <button data-c="#e6dcff"><span class="sw" style="background:#e6dcff"></span>ラベンダー</button>
+        <button data-c="#2b2a33"><span class="sw" style="background:#2b2a33"></span>すみ</button>
+        <input type="color" id="lcolor" value="#ffc6de" aria-label="単色の色">
       </div>
     </div>
     <div class="opt">
@@ -470,17 +496,11 @@ body.staging #veil { opacity: 0; }
         <button data-v="none">なし</button>
       </div>
     </div>
-    <div class="opt">
-      <div class="ol">背景</div>
+    <div class="opt" id="optbg">
+      <div class="ol">背景(全画面エフェクト)</div>
       <div class="chips" id="lbg">
         <button data-v="jacket">ジャケット</button>
         <button data-v="yume"><span class="sw" style="background:linear-gradient(135deg,#ffd1e8,#c8e7ff)"></span>ゆめかわ</button>
-        <button data-v="yozora"><span class="sw" style="background:linear-gradient(135deg,#3a2d6b,#0d0b1e)"></span>夜空</button>
-        <button data-v="umi"><span class="sw" style="background:linear-gradient(135deg,#0b3d5c,#7fd3e0)"></span>海</button>
-        <button data-v="yuyake"><span class="sw" style="background:linear-gradient(135deg,#c2477a,#ffb36b)"></span>夕焼け</button>
-        <button data-v="mori"><span class="sw" style="background:linear-gradient(135deg,#1f4d3a,#b8e0a8)"></span>森</button>
-        <button data-v="color">単色</button>
-        <input type="color" id="lcolor" value="#ffc6de" aria-label="背景の色">
         <button data-v="image">画像…</button>
         <input type="file" id="limage" accept="image/*" hidden>
       </div>
@@ -507,7 +527,7 @@ body.staging #veil { opacity: 0; }
     <div class="opt"><div class="ol"><span>背景のぼかし</span><span id="lblurv"></span></div><input type="range" id="lblur" min="0" max="60" step="2"></div>
     <div class="opt"><div class="ol"><span>暗さ</span><span id="ldimv"></span></div><input type="range" id="ldim" min="0" max="80" step="5"></div>
     <div class="opt"><div class="ol"><span>反応の大きさ</span><span id="lgainv"></span></div><input type="range" id="lgain" min="40" max="200" step="10"></div>
-    <div class="opt"><label class="chk">メイン画面の背景にも使う<input type="checkbox" id="lmain"></label></div>
+    <div class="opt" id="optmain"><label class="chk">メイン画面の背景にも使う<input type="checkbox" id="lmain"></label></div>
     <div class="lcred">うさチルplayer © 2026 kiri.karasuba</div>
   </div>
 <div id="custombg" class="lookbg" hidden></div>
@@ -989,7 +1009,13 @@ body.staging #veil { opacity: 0; }
     if (u) pickColor(u); else applyColor(330, 70);
   }
   var accH = 330, accS = 70;
+  var jH = 330, jS = 70;
   function applyColor(h, s) {
+    jH = h; jS = s;
+    if (typeof look !== 'undefined' && look) {
+      if (look.style === 'scene' && SCENE_HUE[look.scene]) { h = SCENE_HUE[look.scene][0]; s = SCENE_HUE[look.scene][1]; }
+      else if (look.style === 'mono') { var c = hexHue(look.color); h = c.h; s = c.s < 10 ? 6 : Math.max(45, Math.min(80, c.s)); }
+    }
     accH = h; accS = s;
     document.documentElement.style.setProperty('--h', Math.round(h));
     document.documentElement.style.setProperty('--s', Math.round(Math.max(s, 12)) + '%');
@@ -1362,9 +1388,21 @@ body.staging #veil { opacity: 0; }
 
   /* ---- 見た目の設定(エフェクト画面の背景・光の色など) ---- */
   var LOOK_DEF = { bg: 'jacket', color: '#ffc6de', glow: 'auto', glowColor: '#ff8fc2', parts: 70, blur: 42, dim: 35, gain: 100, main: false, image: '',
-                   style: 'cute', cs: 'm', fx: 'white', fxColor: '#ffffff' };
+                   style: 'cute', cs: 'm', fx: 'white', fxColor: '#ffffff', scene: 'yozora' };
   var look = Object.assign({}, LOOK_DEF);
   try { Object.assign(look, JSON.parse(lsGet('look') || '{}')); } catch (e) {}
+  // 前の版で背景にしていた 夜空・海・夕焼け・森・単色 は、スタイルのほうへ移した
+  // (メイン画面にも使っていた人は、見た目が変わらないよう そのスタイルに切り替える)
+  if (['yozora', 'umi', 'yuyake', 'mori'].indexOf(look.bg) >= 0) { look.scene = look.bg; if (look.main && look.style !== 'simple') look.style = 'scene'; look.bg = 'jacket'; }
+  if (look.bg === 'color') { if (look.main && look.style !== 'simple') look.style = 'mono'; look.bg = 'jacket'; }
+  var SCENE_HUE = { yozora: [255, 55], umi: [195, 65], yuyake: [340, 70], mori: [140, 45] };
+  // いまの背景: けしき・単色スタイルならそちらが優先
+  function effBg() {
+    if (look.style === 'scene') return SCENE_HUE[look.scene] ? look.scene : 'yozora';
+    if (look.style === 'mono') return 'color';
+    return look.bg;
+  }
+  function lum(c) { return .299 * parseInt(c.substr(1, 2), 16) + .587 * parseInt(c.substr(3, 2), 16) + .114 * parseInt(c.substr(5, 2), 16); }
   var GRADS = {
     yume: 'linear-gradient(160deg,#ffd1e8,#e3d1ff 45%,#c8e7ff 75%,#ffe6f2)',
     yozora: 'radial-gradient(120% 80% at 50% 0%,#4a3a85,#1b1640 45%,#07060f 85%)',
@@ -1374,11 +1412,11 @@ body.staging #veil { opacity: 0; }
   };
   function saveLook() { try { localStorage.setItem('look', JSON.stringify(look)); } catch (e) { if (look.image) { look.image = ''; look.bg = 'jacket'; lsSet('look', JSON.stringify(look)); } } }
   function paintLook(el) {
-    var u = coverUrl(tracks[cur]), css = '', grad = false, imgUrl = null;
-    if (look.bg === 'jacket') imgUrl = u;
-    else if (look.bg === 'image') imgUrl = look.image || u;
-    else if (look.bg === 'color') { css = look.color; }
-    else { css = GRADS[look.bg] || GRADS.yume; grad = true; }
+    var u = coverUrl(tracks[cur]), css = '', grad = false, imgUrl = null, bg = effBg();
+    if (bg === 'jacket') imgUrl = u;
+    else if (bg === 'image') imgUrl = look.image || u;
+    else if (bg === 'color') { css = look.color; }
+    else { css = GRADS[bg] || GRADS.yume; grad = true; }
     var bgCss = imgUrl ? 'url("' + imgUrl + '")' : (css || GRADS.yume);
     if (!imgUrl && !css) grad = true;
     var html = '<div class="lk' + (grad ? ' grad' : '') + '"></div>';
@@ -1391,19 +1429,24 @@ body.staging #veil { opacity: 0; }
   function applyLook() {
     paintLook($('#sbg'));
     $('#stage').style.setProperty('--dim', (look.dim / 100).toFixed(2));
-    var useMain = look.main && look.bg !== 'jacket';
+    var styled = look.style === 'scene' || look.style === 'mono', bg = effBg();
+    var useMain = styled || (look.main && bg !== 'jacket');
     $('#custombg').hidden = !useMain;
     if (useMain) paintLook($('#custombg'));
     // 背景の明るさに合わせて、文字やカードを明るい/暗い見た目に切り替える
     var tone = null;
     if (useMain) {
-      if (look.bg === 'yume') tone = 'light';
-      else if (GRADS[look.bg]) tone = 'dark';
-      else if (look.bg === 'color') {
-        var c = look.color, L = .299 * parseInt(c.substr(1, 2), 16) + .587 * parseInt(c.substr(3, 2), 16) + .114 * parseInt(c.substr(5, 2), 16);
-        tone = L > 150 ? 'light' : 'dark';
-      }
+      if (bg === 'yume') tone = 'light';
+      else if (GRADS[bg]) tone = 'dark';
+      else if (bg === 'color') tone = lum(look.color) > 150 ? 'light' : 'dark';
     }
+    // スタイルごとに、出す項目を切り替える
+    $('#lscene').hidden = look.style !== 'scene';
+    $('#lmono').hidden = look.style !== 'mono';
+    $('#optbg').hidden = styled; $('#optmain').hidden = styled;
+    $$('#lscene button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.v === look.scene); });
+    $$('#lmono button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.c === look.color); });
+    applyColor(jH, jS);
     if (tone) document.documentElement.setAttribute('data-theme', tone); else document.documentElement.removeAttribute('data-theme');
     // 設定パネルの表示
     $$('#lbg button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.v === look.bg); });
@@ -1600,7 +1643,9 @@ body.staging #veil { opacity: 0; }
     if (b.dataset.v === 'image') { $('#limage').click(); return; }
     look.bg = b.dataset.v; saveLook(); applyLook();
   });
-  $('#lcolor').addEventListener('input', function (e) { look.color = e.target.value; look.bg = 'color'; saveLook(); applyLook(); });
+  $('#lcolor').addEventListener('input', function (e) { look.color = e.target.value; look.style = 'mono'; saveLook(); applyLook(); });
+  $('#lscene').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; look.scene = b.dataset.v; saveLook(); applyLook(); });
+  $('#lmono').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; look.color = b.dataset.c; $('#lcolor').value = look.color; saveLook(); applyLook(); });
   $('#limage').addEventListener('change', function (e) {
     var f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
     var u = URL.createObjectURL(f), im = new Image();
@@ -1711,6 +1756,29 @@ body.staging #veil { opacity: 0; }
   }
   $('#eqbtn').onclick = openEq;
   saveEq();
+
+  /* ---- 音量 ---- */
+  var VOL_ICONS = {
+    mute: '<path d="M4 9h4l5-4v14l-5-4H4zm12.6 3 2.7-2.7-1.4-1.4-2.7 2.7-2.7-2.7-1.4 1.4 2.7 2.7-2.7 2.7 1.4 1.4 2.7-2.7 2.7 2.7 1.4-1.4z"/>',
+    low: '<path d="M4 9h4l5-4v14l-5-4H4zm11.5 3a3.5 3.5 0 0 0-1.5-2.9v5.8a3.5 3.5 0 0 0 1.5-2.9z"/>',
+    high: '<path d="M4 9h4l5-4v14l-5-4H4zm11.5 3a3.5 3.5 0 0 0-1.5-2.9v5.8a3.5 3.5 0 0 0 1.5-2.9zM14 4.2v2.1a6 6 0 0 1 0 11.4v2.1a8 8 0 0 0 0-15.6z"/>'
+  };
+  var vol = parseInt(lsGet('vol') || '100', 10); if (!(vol >= 0 && vol <= 100)) vol = 100;
+  var muted = lsGet('muted') === '1', volBefore = vol || 60;
+  function applyVol() {
+    var v = muted ? 0 : vol, g = Math.pow(v / 100, 2);          // 耳の感じ方に合わせて、小さい音量側を細かく
+    [audio, spare].forEach(function (el) { el.volume = g; });
+    $('#vol').value = v; $('#volv').textContent = v;
+    $('#volIco').innerHTML = v === 0 ? VOL_ICONS.mute : v < 50 ? VOL_ICONS.low : VOL_ICONS.high;
+    $('#mute').setAttribute('aria-label', muted ? 'ミュートを解除' : 'ミュート');
+    lsSet('vol', String(vol)); lsSet('muted', muted ? '1' : '');
+  }
+  $('#vol').addEventListener('input', function (e) { vol = +e.target.value; muted = false; if (vol) volBefore = vol; applyVol(); });
+  $('#mute').onclick = function () {
+    if (muted || vol === 0) { muted = false; if (!vol) vol = volBefore || 60; } else muted = true;
+    applyVol();
+  };
+  applyVol();
 
   /* ---- はじめてのガイド ---- */
   var GUIDE = [
