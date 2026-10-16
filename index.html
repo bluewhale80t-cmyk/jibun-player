@@ -527,8 +527,16 @@ body.staging #veil { opacity: 0; }
         <input type="color" id="lcolor" value="#ffc6de" aria-label="単色の色">
       </div>
     </div>
-    <div class="opt">
-      <div class="ol">ジャケットの大きさ</div>
+    <div class="opt" id="optfx">
+      <div class="ol" style="font-weight:700;color:var(--fg)">全画面エフェクト</div>
+      <div class="ol">背景</div>
+      <div class="chips" id="lbg">
+        <button data-v="jacket">ジャケット</button>
+        <button data-v="image">画像…</button>
+        <input type="file" id="limage" accept="image/*" hidden>
+      </div>
+      <p class="count" id="lbgnote" style="margin:0">いまのスタイルの背景を使っています</p>
+      <div class="ol" style="margin-top:14px">ジャケットの大きさ</div>
       <div class="chips" id="lcs">
         <button data-v="s">小</button>
         <button data-v="m">中</button>
@@ -539,15 +547,6 @@ body.staging #veil { opacity: 0; }
         <span class="count" style="margin-right:2px">まんなか:</span>
         <button data-v="0">なにもなし</button>
         <button data-v="1">回るCD</button>
-      </div>
-    </div>
-    <div class="opt" id="optbg">
-      <div class="ol">背景(全画面エフェクト)</div>
-      <div class="chips" id="lbg">
-        <button data-v="jacket">ジャケット</button>
-        <button data-v="yume"><span class="sw" style="background:linear-gradient(135deg,#ffd1e8,#c8e7ff)"></span>ゆめかわ</button>
-        <button data-v="image">画像…</button>
-        <input type="file" id="limage" accept="image/*" hidden>
       </div>
     </div>
     <div class="opt">
@@ -1449,6 +1448,7 @@ body.staging #veil { opacity: 0; }
   // 前の版で背景にしていた 夜空・海・夕焼け・森・単色 は、スタイルのほうへ移した
   // (メイン画面にも使っていた人は、見た目が変わらないよう そのスタイルに切り替える)
   if (['yozora', 'umi', 'yuyake', 'mori'].indexOf(look.bg) >= 0) { look.scene = look.bg; if (look.main && look.style !== 'simple') look.style = 'scene'; look.bg = 'jacket'; }
+  if (look.bg === 'yume') { if (look.main && (look.style || 'cute') === 'cute' && (!look.theme || look.theme === 'auto')) look.theme = 'yume'; look.bg = 'jacket'; }
   if (look.bg === 'color') { if (look.main && look.style !== 'simple') look.style = 'mono'; look.bg = 'jacket'; }
   var SCENE_HUE = { yozora: [255, 55], umi: [195, 65], yuyake: [340, 70], mori: [140, 45] };
   // いまの背景: けしき・単色スタイルならそちらが優先
@@ -1509,7 +1509,7 @@ body.staging #veil { opacity: 0; }
     // スタイルごとに、出す項目を切り替える
     $('#lscene').hidden = look.style !== 'scene';
     $('#lmono').hidden = look.style !== 'mono';
-    $('#optbg').hidden = styled; $('#optmain').hidden = styled;
+    $('#lbg').hidden = styled; $('#lbgnote').hidden = !styled; $('#optmain').hidden = styled;
     $$('#lscene button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.v === look.scene); });
     var preset = look.color === '#f7f7f8' || look.color === '#1c1c20';
     $$('#lmono button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.c === 'custom' ? !preset : b.dataset.c === look.color); });
@@ -1823,6 +1823,7 @@ body.staging #veil { opacity: 0; }
     sun:     'M12 7.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zM11 1.5h2v3.5h-2zm0 17.5h2v3.5h-2zM1.5 11h3.5v2H1.5zm17.5 0h3.5v2H19z'
   };
   var THEMES = {
+    yume:   { name: 'ゆめかわ',  jp: 'パステル',     band: '#d6b8ff', bg: 'linear-gradient(160deg,#ffd1e8,#e3d1ff 45%,#c8e7ff 75%,#ffe6f2)', hue: [290, 62], deco: '#c79cff', motifs: ['sparkle', 'star', 'heart'] },
     pink:   { name: 'Pink',      jp: 'スイーツ',     band: '#ffb3b8', bg: 'linear-gradient(160deg,#ffe8ee,#ffd3dd 45%,#f9c9d3 75%,#fff2f5)', hue: [345, 72], deco: '#ff8fab', motifs: ['heart', 'ribbon', 'sparkle'] },
     blue:   { name: 'Blue',      jp: '雲の上',       band: '#9fd0f7', bg: 'linear-gradient(180deg,#c9e4ff,#dfefff 45%,#f3f8ff)', hue: [210, 75], deco: '#7fb6ff', motifs: ['cloud', 'moon', 'star'] },
     white:  { name: 'White',     jp: 'クリスタル',   band: '#e6e6ea', bg: 'linear-gradient(160deg,#ffffff,#f3f1f8 50%,#ecf1fa)', hue: [255, 32], deco: '#b9b2e6', motifs: ['crystal', 'sparkle', 'moon'] },
