@@ -207,8 +207,7 @@ body:has(.ghost) { cursor: grabbing; user-select: none; }
     conic-gradient(from 20deg, #f2f2f7, #c9d9ff, #f6d3ff, #fff3c4, #c9fff1, #d7d0ff, #f2f2f7);
   -webkit-mask: radial-gradient(circle, transparent 0 7%, #000 7.4%); mask: radial-gradient(circle, transparent 0 7%, #000 7.4%); }
 #sdisc .dk::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 300deg, transparent, rgb(255 255 255 / .55), transparent 18%, transparent 50%, rgb(255 255 255 / .35), transparent 68%); }
-#sdisc .dlab { position: absolute; inset: 27%; border-radius: 50%; background: var(--accent-soft) center / cover; box-shadow: 0 0 0 3px rgb(255 255 255 / .6), inset 0 0 0 1px rgb(0 0 0 / .08); }
-#sdisc .dlab.none { background: radial-gradient(circle, hsl(var(--h) var(--s) 80%), hsl(var(--h) var(--s) 62%)); }
+#sdisc .dlab { position: absolute; inset: 33%; border-radius: 50%; background: radial-gradient(circle, rgb(255 255 255 / .0) 0 34%, rgb(255 255 255 / .55) 35% 38%, rgb(220 222 235 / .5) 39% 70%, rgb(255 255 255 / .7) 71% 73%, rgb(255 255 255 / 0) 74%); }
 #sdisc.on .dk { animation-play-state: running; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { #sdisc .dk { animation: none; } }
@@ -311,19 +310,24 @@ body.staging #deco { display: none; }
   --glass: rgb(24 24 27 / .92); --glass-strong: #18181b; --base: #09090b;
 }
 :root[data-style="simple"] #bg, :root[data-style="simple"] #veil { display: none; }
-:root[data-style="simple"] .glass { -webkit-backdrop-filter: none; backdrop-filter: none; }
-:root[data-style="simple"] .card, :root[data-style="simple"] .pane, :root[data-style="simple"] .empty { border-radius: 12px; }
-:root[data-style="simple"] .seg, :root[data-style="simple"] .seg button, :root[data-style="simple"] .add,
-:root[data-style="simple"] .chip, :root[data-style="simple"] .listhead input[type=search], :root[data-style="simple"] .pill,
-:root[data-style="simple"] .chips button { border-radius: 8px; }
-:root[data-style="simple"] .art, :root[data-style="simple"] .art img, :root[data-style="simple"] .art .ph,
-:root[data-style="simple"] .alb .cv, :root[data-style="simple"] .hero .cv, :root[data-style="simple"] .th { border-radius: 6px; }
-:root[data-style="simple"] .art img, :root[data-style="simple"] .alb .cv, :root[data-style="simple"] .hero .cv { box-shadow: none; }
-:root[data-style="simple"] .play { box-shadow: none; }
-:root[data-style="simple"] .brand h1 { font-weight: 700; letter-spacing: 0; }
-:root[data-style="simple"] .label { letter-spacing: .08em; }
-:root[data-style="simple"] .panel, :root[data-style="simple"] .sheet { border-radius: 14px 14px 0 0; }
-:root[data-style="simple"] #stage .scover.sq { border-radius: 4px; }
+:root:is([data-style="simple"],[data-style="mono"]) .glass { -webkit-backdrop-filter: none; backdrop-filter: none; }
+:root:is([data-style="simple"],[data-style="mono"]) .card, :root:is([data-style="simple"],[data-style="mono"]) .pane, :root:is([data-style="simple"],[data-style="mono"]) .empty { border-radius: 12px; }
+:root:is([data-style="simple"],[data-style="mono"]) .seg, :root:is([data-style="simple"],[data-style="mono"]) .seg button, :root:is([data-style="simple"],[data-style="mono"]) .add,
+:root:is([data-style="simple"],[data-style="mono"]) .chip, :root:is([data-style="simple"],[data-style="mono"]) .listhead input[type=search], :root:is([data-style="simple"],[data-style="mono"]) .pill,
+:root:is([data-style="simple"],[data-style="mono"]) .chips button { border-radius: 8px; }
+:root:is([data-style="simple"],[data-style="mono"]) .art, :root:is([data-style="simple"],[data-style="mono"]) .art img, :root:is([data-style="simple"],[data-style="mono"]) .art .ph,
+:root:is([data-style="simple"],[data-style="mono"]) .alb .cv, :root:is([data-style="simple"],[data-style="mono"]) .hero .cv, :root:is([data-style="simple"],[data-style="mono"]) .th { border-radius: 6px; }
+:root:is([data-style="simple"],[data-style="mono"]) .art img, :root:is([data-style="simple"],[data-style="mono"]) .alb .cv, :root:is([data-style="simple"],[data-style="mono"]) .hero .cv { box-shadow: none; }
+:root:is([data-style="simple"],[data-style="mono"]) .play { box-shadow: none; }
+:root:is([data-style="simple"],[data-style="mono"]) .brand h1 { font-weight: 700; letter-spacing: 0; }
+:root:is([data-style="simple"],[data-style="mono"]) .label { letter-spacing: .08em; }
+:root:is([data-style="simple"],[data-style="mono"]) .panel, :root:is([data-style="simple"],[data-style="mono"]) .sheet { border-radius: 14px 14px 0 0; }
+:root:is([data-style="simple"],[data-style="mono"]) #stage .scover.sq { border-radius: 4px; }
+
+/* シンプル(白・黒): ボタンは黒か白のはっきりした色に */
+:root[data-style="mono"][data-neutral="1"] { --accent: #18181b; --accent-fg: #fff; --accent-soft: rgb(24 24 27 / .07); --font-round: var(--font-body); }
+:root[data-style="mono"][data-neutral="1"][data-theme="dark"] { --accent: #fafafa; --accent-fg: #18181b; --accent-soft: rgb(250 250 250 / .08); }
+:root[data-style="mono"] .glass { background: color-mix(in srgb, var(--glass-strong) 88%, transparent); }
 
 /* 歌詞 */
 #slyr { position: absolute; left: 0; right: 0; top: 76px; bottom: 210px; overflow-y: auto; padding: 0 24px; text-align: center; -webkit-mask-image: linear-gradient(transparent, #000 12%, #000 85%, transparent); mask-image: linear-gradient(transparent, #000 12%, #000 85%, transparent); }
@@ -509,9 +513,8 @@ body.staging #veil { opacity: 0; }
       <div class="ol">スタイル</div>
       <div class="chips" id="lstyle">
         <button data-v="cute">かわいい</button>
-        <button data-v="simple">シンプル</button>
+        <button data-v="mono">シンプル</button>
         <button data-v="scene">けしき</button>
-        <button data-v="mono">単色</button>
       </div>
       <div class="tiles" id="ltheme"></div>
       <div class="chips sub" id="lscene" style="margin-top:10px">
@@ -533,6 +536,7 @@ body.staging #veil { opacity: 0; }
       <div class="chips" id="lbg">
         <button data-v="jacket">ジャケット</button>
         <button data-v="image">画像…</button>
+        <button data-v="none">なし</button>
         <input type="file" id="limage" accept="image/*" hidden>
       </div>
       <p class="count" id="lbgnote" style="margin:0">いまのスタイルの背景を使っています</p>
@@ -561,6 +565,7 @@ body.staging #veil { opacity: 0; }
       <div class="ol">エフェクトの色(輪・バー・粒)</div>
       <div class="chips" id="lfx">
         <button data-v="white"><span class="sw" style="background:#fff"></span>白</button>
+        <button data-v="black"><span class="sw" style="background:#1c1a22"></span>黒</button>
         <button data-v="glow">光と同じ色</button>
         <button data-v="rainbow"><span class="sw" style="background:conic-gradient(#ff5f6d,#ffc371,#8bff6a,#5ad1ff,#b06bff,#ff5f6d)"></span>虹色</button>
         <button data-v="custom">自分で選ぶ</button>
@@ -1069,6 +1074,7 @@ body.staging #veil { opacity: 0; }
       if (look.style === 'scene' && SCENE_HUE[look.scene]) { h = SCENE_HUE[look.scene][0]; s = SCENE_HUE[look.scene][1]; }
       else if (look.style === 'cute' && typeof THEMES !== 'undefined' && THEMES[look.theme]) { h = THEMES[look.theme].hue[0]; s = THEMES[look.theme].hue[1]; }
       else if (look.style === 'mono') { var c = hexHue(look.color); h = c.h; s = c.s < 10 ? 6 : Math.max(45, Math.min(80, c.s)); }
+      document.documentElement.setAttribute('data-neutral', look.style === 'mono' && hexHue(look.color).s < 10 ? '1' : '0');
     }
     accH = h; accS = s;
     document.documentElement.style.setProperty('--h', Math.round(h));
@@ -1448,6 +1454,10 @@ body.staging #veil { opacity: 0; }
   // 前の版で背景にしていた 夜空・海・夕焼け・森・単色 は、スタイルのほうへ移した
   // (メイン画面にも使っていた人は、見た目が変わらないよう そのスタイルに切り替える)
   if (['yozora', 'umi', 'yuyake', 'mori'].indexOf(look.bg) >= 0) { look.scene = look.bg; if (look.main && look.style !== 'simple') look.style = 'scene'; look.bg = 'jacket'; }
+  if (look.style === 'simple') {
+    var dk = document.documentElement.getAttribute('data-theme') === 'dark' || matchMedia('(prefers-color-scheme: dark)').matches;
+    look.style = 'mono'; look.color = dk ? '#1c1c20' : '#f7f7f8';
+  }
   if (look.bg === 'yume') { if (look.main && (look.style || 'cute') === 'cute' && (!look.theme || look.theme === 'auto')) look.theme = 'yume'; look.bg = 'jacket'; }
   if (look.bg === 'color') { if (look.main && look.style !== 'simple') look.style = 'mono'; look.bg = 'jacket'; }
   var SCENE_HUE = { yozora: [255, 55], umi: [195, 65], yuyake: [340, 70], mori: [140, 45] };
@@ -1473,6 +1483,7 @@ body.staging #veil { opacity: 0; }
     else if (bg === 'image') imgUrl = look.image || u;
     else if (bg === 'color') { css = look.color; }
     else if (bg === 'theme') { css = curTheme().bg; grad = true; }
+    else if (bg === 'none') { css = '#121016'; }
     else { css = GRADS[bg] || GRADS.yume; grad = true; }
     var bgCss = imgUrl ? 'url("' + imgUrl + '")' : (css || GRADS.yume);
     if (!imgUrl && !css) grad = true;
@@ -1497,6 +1508,7 @@ body.staging #veil { opacity: 0; }
       else if (GRADS[bg]) tone = 'dark';
       else if (bg === 'color') tone = lum(look.color) > 150 ? 'light' : 'dark';
       else if (bg === 'theme') tone = 'light';
+      else if (bg === 'none') tone = 'dark';
     }
     $('#ltheme').hidden = look.style !== 'cute';
     $$('#ltheme .tile').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.t === (THEMES[look.theme] ? look.theme : 'auto')); });
@@ -1593,6 +1605,7 @@ body.staging #veil { opacity: 0; }
   // エフェクトの色(i は輪やバーの何本目か。虹色のときに使う)
   function fx(a, i) {
     if (look.fx === 'glow') return accentRGB(82, a);
+    if (look.fx === 'black') return 'rgba(22,20,28,' + a + ')';
     if (look.fx === 'rainbow') return 'hsla(' + (((i || 0) * 7.5 + vt * 30) % 360) + ',90%,72%,' + a + ')';
     if (look.fx === 'custom') {
       var c = look.fxColor || '#ffffff';
@@ -1633,7 +1646,7 @@ body.staging #veil { opacity: 0; }
     // 光の粒
     if (parts.length < look.parts) parts.push({ a: Math.random() * Math.PI * 2, d: R, v: .3 + Math.random() * .7, s: 1 + Math.random() * 2.5, life: 0, k: Math.floor(Math.random() * 3), rot: Math.random() * 6.28 });
     var th = curTheme();
-    vg.globalCompositeOperation = 'lighter';
+    vg.globalCompositeOperation = look.fx === 'black' ? 'source-over' : 'lighter';
     parts.forEach(function (p) {
       p.d += (20 + pulse * 260) * p.v * dt * dpr; p.life += dt;
       var x = cx + Math.cos(p.a) * p.d, y = cy + Math.sin(p.a) * p.d, al = Math.max(0, 1 - p.d / (Math.max(W, H) * .7));
@@ -1666,15 +1679,19 @@ body.staging #veil { opacity: 0; }
         vg.beginPath(); vg.moveTo(cx + Math.cos(ang) * r1, cy + Math.sin(ang) * r1); vg.lineTo(cx + Math.cos(ang) * r2, cy + Math.sin(ang) * r2); vg.stroke();
       }
     } else if (vizMode === 'bars') {
-      var bw = W / (BINS * 2), base = H * .74;
+      // 細くてシュッとしたバー: 細い線を角丸で立て、下に薄い映り込み
+      var bw = W / (BINS * 2), base = H * .74, lw = Math.max(1.5 * dpr, Math.min(5 * dpr, bw * .34));
+      vg.lineCap = 'round'; vg.lineWidth = lw;
       for (var j = 0; j < BINS * 2; j++) {
-        var lv2 = lv(j < BINS ? BINS - 1 - j : j - BINS), h = 4 * dpr + lv2 * H * .26;
+        var lv2 = lvs(j < BINS ? BINS - 1 - j : j - BINS), h = 3 * dpr + lv2 * H * .32, xx = j * bw + bw / 2;
         var gr = vg.createLinearGradient(0, base - h, 0, base);
-        gr.addColorStop(0, fx(.95, j)); gr.addColorStop(1, look.fx === 'white' ? accentRGB(70, .3) : fx(.25, j));
-        vg.fillStyle = gr;
-        vg.fillRect(j * bw + bw * .18, base - h, bw * .64, h);
-        vg.fillStyle = look.fx === 'white' ? accentRGB(80, .18) : fx(.15, j);
-        vg.fillRect(j * bw + bw * .18, base + 3 * dpr, bw * .64, h * .35);
+        gr.addColorStop(0, fx(1, j)); gr.addColorStop(.75, fx(.75, j)); gr.addColorStop(1, look.fx === 'white' ? accentRGB(75, .35) : fx(.3, j));
+        vg.strokeStyle = gr;
+        vg.beginPath(); vg.moveTo(xx, base); vg.lineTo(xx, base - h); vg.stroke();
+        var gr2 = vg.createLinearGradient(0, base + 4 * dpr, 0, base + 4 * dpr + h * .3);
+        gr2.addColorStop(0, look.fx === 'white' ? accentRGB(85, .22) : fx(.18, j)); gr2.addColorStop(1, fx(0, j));
+        vg.strokeStyle = gr2;
+        vg.beginPath(); vg.moveTo(xx, base + 4 * dpr); vg.lineTo(xx, base + 4 * dpr + h * .3); vg.stroke();
       }
     } else {
       // ほわほわ: 音に合わせてふくらむ柔らかい輪
@@ -1801,8 +1818,6 @@ body.staging #veil { opacity: 0; }
 
   /* ---- 回るCD(ジャケットなしのとき) ---- */
   function renderDisc() {
-    var u = coverUrl(tracks[cur]), lab = $('#sdisc .dlab');
-    if (lab._u !== u) { lab._u = u; lab.style.backgroundImage = u ? 'url("' + u + '")' : ''; lab.classList.toggle('none', !u); }
     $('#sdisc').classList.toggle('on', !audio.paused && cur >= 0);
   }
 
