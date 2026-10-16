@@ -190,6 +190,28 @@ input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent); height: 
 .ar { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row.cur .nm { color: var(--accent); font-weight: 700; }
 .row.cur .th { outline: 2px solid var(--accent); outline-offset: -2px; }
+.grip { flex: none; width: 26px; height: 44px; display: grid; place-items: center; color: var(--muted); opacity: .55; cursor: grab; touch-action: none; margin-left: -4px; }
+.grip svg { width: 18px; height: 18px; }
+.grip:hover { opacity: 1; }
+.row.lifted { opacity: .3; }
+.ghost { position: fixed; z-index: 40; list-style: none; pointer-events: none; display: flex; align-items: center; background: var(--glass-strong); border-radius: 12px; box-shadow: 0 10px 30px rgb(0 0 0 / .25); transform: scale(1.02); }
+.dropline { position: fixed; z-index: 39; height: 3px; border-radius: 2px; background: var(--accent); pointer-events: none; }
+body:has(.ghost) { cursor: grabbing; user-select: none; }
+/* 回るCD */
+#sdisc { position: absolute; left: 50%; top: 42%; width: min(56vw, 260px); aspect-ratio: 1; transform: translate(-50%, -50%) scale(calc(1 + var(--pulse, 0) * .04)); display: none; border-radius: 50%; box-shadow: 0 10px 40px rgb(0 0 0 / .3), 0 0 60px var(--glowc, rgb(255 255 255 / .35)); }
+:root[data-cs="none"][data-disc="1"] #sdisc { display: block; }
+:root[data-cs="none"][data-disc="1"] #stage.lyr #sdisc { opacity: 0; }
+#sdisc .dk { position: absolute; inset: 0; border-radius: 50%; animation: spin 7s linear infinite; animation-play-state: paused;
+  background:
+    repeating-radial-gradient(circle, rgb(255 255 255 / 0) 0 3px, rgb(255 255 255 / .07) 3px 4px),
+    conic-gradient(from 20deg, #f2f2f7, #c9d9ff, #f6d3ff, #fff3c4, #c9fff1, #d7d0ff, #f2f2f7);
+  -webkit-mask: radial-gradient(circle, transparent 0 7%, #000 7.4%); mask: radial-gradient(circle, transparent 0 7%, #000 7.4%); }
+#sdisc .dk::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 300deg, transparent, rgb(255 255 255 / .55), transparent 18%, transparent 50%, rgb(255 255 255 / .35), transparent 68%); }
+#sdisc .dlab { position: absolute; inset: 27%; border-radius: 50%; background: var(--accent-soft) center / cover; box-shadow: 0 0 0 3px rgb(255 255 255 / .6), inset 0 0 0 1px rgb(0 0 0 / .08); }
+#sdisc .dlab.none { background: radial-gradient(circle, hsl(var(--h) var(--s) 80%), hsl(var(--h) var(--s) 62%)); }
+#sdisc.on .dk { animation-play-state: running; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { #sdisc .dk { animation: none; } }
 .mini { flex: none; width: 40px; height: 40px; display: grid; place-items: center; color: var(--muted); border-radius: 50%; }
 .mini svg { width: 20px; height: 20px; }
 .mini:active { background: var(--accent-soft); }
@@ -513,6 +535,11 @@ body.staging #veil { opacity: 0; }
         <button data-v="l">大</button>
         <button data-v="none">なし</button>
       </div>
+      <div class="chips sub" id="ldisc" style="margin-top:10px">
+        <span class="count" style="margin-right:2px">まんなか:</span>
+        <button data-v="0">なにもなし</button>
+        <button data-v="1">回るCD</button>
+      </div>
     </div>
     <div class="opt" id="optbg">
       <div class="ol">背景(全画面エフェクト)</div>
@@ -557,6 +584,7 @@ body.staging #veil { opacity: 0; }
   <canvas id="viz"></canvas>
   <div id="slyr" hidden></div>
   <img class="scover sq" id="scover" alt="" hidden>
+  <div id="sdisc"><div class="dk"><div class="dlab"></div></div></div>
   <div class="scover ph" id="sph"><svg viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3z"/></svg></div>
   <div class="stop">
     <button id="sclose" aria-label="閉じる"><svg viewBox="0 0 24 24"><path d="M15.4 6.4 14 5l-7 7 7 7 1.4-1.4L9.8 12z"/></svg>戻る</button>
@@ -840,6 +868,7 @@ body.staging #veil { opacity: 0; }
     for (var k = a; k < b; k++) {
       var i = songIdx[k], t = tracks[i];
       html += '<li class="row' + (i === cur ? ' cur' : '') + '" data-i="' + i + '">' +
+        '<span class="grip" aria-label="ドラッグで並べ替え"><svg viewBox="0 0 24 24">' + ICON_GRIP + '</svg></span>' +
         '<button class="pick" data-a="play">' + th(t) + '<span class="tx"><div class="nm">' + esc(ttl(t)) + '</div>' +
         (t.artist ? '<div class="ar">' + esc(t.artist) + '</div>' : '') + '</span></button>' +
         '<button class="mini" data-a="next" aria-label="次に再生"><svg viewBox="0 0 24 24">' + ICON_NEXTUP + '</svg></button>' +
@@ -883,11 +912,10 @@ body.staging #veil { opacity: 0; }
       '<button class="pill ghost" data-a="pren">名前を変える</button><button class="pill ghost" data-a="pdel">削除</button></div></div></div><ul class="list tracks">';
     ts.forEach(function (t, k) {
       html += '<li class="row' + (t === t0 ? ' cur' : '') + '" data-i="' + idx(t) + '" data-k="' + k + '">' +
+        '<span class="grip" aria-label="ドラッグで並べ替え"><svg viewBox="0 0 24 24">' + ICON_GRIP + '</svg></span>' +
         '<button class="pick" data-a="pitem">' + th(t) + '<span class="tx"><div class="nm">' + esc(ttl(t)) + '</div>' +
         (t.artist ? '<div class="ar">' + esc(t.artist) + '</div>' : '') + '</span></button>' +
-        '<span class="ord"><button class="mini" data-a="up" aria-label="上へ"' + (k ? '' : ' disabled') + '><svg viewBox="0 0 24 24">' + ICON_UP + '</svg></button>' +
-        '<button class="mini" data-a="down" aria-label="下へ"' + (k < ts.length - 1 ? '' : ' disabled') + '><svg viewBox="0 0 24 24">' + ICON_DOWN + '</svg></button>' +
-        '<button class="mini" data-a="prm" aria-label="プレイリストから外す"><svg viewBox="0 0 24 24">' + ICON_X + '</svg></button></span></li>';
+        '<button class="mini" data-a="prm" aria-label="プレイリストから外す"><svg viewBox="0 0 24 24">' + ICON_X + '</svg></button></li>';
     });
     html += '</ul>';
     if (!ts.length) html += '<p class="count" style="text-align:center;padding:16px 8px">曲一覧の「︙」→「プレイリストに追加」で曲を入れられます</p>';
@@ -1005,6 +1033,7 @@ body.staging #veil { opacity: 0; }
     });
     if (u !== shownCover) { shownCover = u; setBackground(u); if (typeof applyLook === 'function') applyLook(); }
     if (typeof renderLyrics === 'function' && $('#slyrbtn')) renderLyrics();
+    if (typeof renderDisc === 'function' && $('#sdisc')) renderDisc();
   }
   function renderModes() {
     var s = $('#shuffle'), r = $('#repeat');
@@ -1018,6 +1047,7 @@ body.staging #veil { opacity: 0; }
     $$('.playIco').forEach(function (el) { setIcon(el, p ? ICON_PAUSE : ICON_PLAY); });
     $('#play').setAttribute('aria-label', p ? '一時停止' : '再生');
     $('#splay').setAttribute('aria-label', p ? '一時停止' : '再生');
+    if (typeof renderDisc === 'function' && $('#sdisc')) renderDisc();
     try { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = cur < 0 ? 'none' : p ? 'playing' : 'paused'; } catch (e) {}
   }
   function resetBar() { $('#cur').textContent = '0:00'; $('#dur').textContent = '0:00'; $('#bar').value = 0; }
@@ -1382,7 +1412,7 @@ body.staging #veil { opacity: 0; }
       if (!actx) {
         var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
         actx = new AC();
-        analyser = actx.createAnalyser(); analyser.fftSize = 256; analyser.smoothingTimeConstant = .78;
+        analyser = actx.createAnalyser(); analyser.fftSize = 256; analyser.smoothingTimeConstant = .78; analyser.minDecibels = -92; analyser.maxDecibels = -12;
         sink = actx.createGain(); sink.gain.value = 0;
         analyser.connect(sink); sink.connect(actx.destination);
         freq = new Uint8Array(analyser.frequencyBinCount);
@@ -1413,7 +1443,7 @@ body.staging #veil { opacity: 0; }
 
   /* ---- 見た目の設定(エフェクト画面の背景・光の色など) ---- */
   var LOOK_DEF = { bg: 'jacket', color: '#ffc6de', glow: 'auto', glowColor: '#ff8fc2', parts: 70, blur: 42, dim: 35, gain: 100, main: false, image: '',
-                   style: 'cute', cs: 'm', fx: 'white', fxColor: '#ffffff', scene: 'yozora', theme: 'auto', mainFx: false };
+                   style: 'cute', cs: 'm', fx: 'white', fxColor: '#ffffff', scene: 'yozora', theme: 'auto', mainFx: false, disc: false };
   var look = Object.assign({}, LOOK_DEF);
   try { Object.assign(look, JSON.parse(lsGet('look') || '{}')); } catch (e) {}
   // 前の版で背景にしていた 夜空・海・夕焼け・森・単色 は、スタイルのほうへ移した
@@ -1495,6 +1525,9 @@ body.staging #veil { opacity: 0; }
     $('#lgain').value = look.gain; $('#lgainv').textContent = look.gain + '%';
     $('#lmain').checked = look.main;
     $('#lmainfx').checked = look.mainFx;
+    document.documentElement.setAttribute('data-disc', look.disc ? '1' : '0');
+    $('#ldisc').hidden = look.cs !== 'none';
+    $$('#ldisc button').forEach(function (b) { b.setAttribute('aria-pressed', (b.dataset.v === '1') === !!look.disc); });
     $('#ring').hidden = !look.mainFx;
     document.documentElement.setAttribute('data-style', look.style);
     document.documentElement.setAttribute('data-cs', look.cs);
@@ -1569,7 +1602,10 @@ body.staging #veil { opacity: 0; }
   }
   // となり同士をならして、1本だけ飛び出す・へこむのを防ぐ
   function lvs(i) { var a = lv(Math.max(0, i - 1)), b = lv(i), c = lv(Math.min(BINS - 1, i + 1)); return (a + b * 2 + c) / 4; }
-  function lv(i) { return Math.min(1, levels[i] * (look.gain || 100) / 100); }
+  function lv(i) {
+    var x = levels[i] * (look.gain || 100) / 100;
+    return x < .72 ? x : .72 + .28 * Math.tanh((x - .72) / .28);   // 上限にぴったり張り付かないよう、強い音はゆるやかに丸める
+  }
   var colA = '', colB = '', colTick = 0;
   function drawRing() {
     var dpr = fit(ring), W = ring.width, H = ring.height, cx = W / 2, cy = H / 2;
@@ -1589,8 +1625,8 @@ body.staging #veil { opacity: 0; }
   function drawStage(dt) {
     var dpr = fit(viz), W = viz.width, H = viz.height, cx = W / 2, cy = H * .42;
     vg.clearRect(0, 0, W, H);
-    var noArt = look.cs === 'none';
-    var sq = !noArt && !$('#scover').hidden, cel = sq ? $('#scover') : $('#sph');
+    var disc = look.cs === 'none' && look.disc, noArt = look.cs === 'none' && !disc;
+    var sq = !noArt && !disc && !$('#scover').hidden, cel = disc ? $('#sdisc') : sq ? $('#scover') : $('#sph');
     var half = noArt ? Math.min(W * .2, 95 * dpr) : (cel.offsetWidth || 220) / 2 * dpr;   // ジャケットの大きさ(小・中・大・なし)に合わせる
     var R = half * (1 + pulse * .06);
     var Rb = sq ? R * 1.47 : R;                                  // 四角いジャケットの角に輪が隠れないように
@@ -1685,6 +1721,91 @@ body.staging #veil { opacity: 0; }
   if (!MODES[vizMode]) vizMode = 'ring';
   renderMode();
 
+  /* ---- ドラッグで曲順を入れ替える(マウスでも指でも) ---- */
+  var ICON_GRIP = '<path d="M9 5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm6 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zM9 10.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm6 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zM9 16a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm6 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/>';
+  var drag = null;
+  function startDrag(e, row, opt) {
+    e.preventDefault();
+    var r = row.getBoundingClientRect(), ghost = row.cloneNode(true), line = document.createElement('div');
+    ghost.className += ' ghost'; ghost.style.cssText = 'left:' + r.left + 'px;top:' + r.top + 'px;width:' + r.width + 'px;height:' + r.height + 'px';
+    line.className = 'dropline'; line.style.left = r.left + 'px'; line.style.width = r.width + 'px';
+    document.body.appendChild(ghost); document.body.appendChild(line);
+    row.classList.add('lifted');
+    drag = { opt: opt, ghost: ghost, line: line, dy: e.clientY - r.top, y: e.clientY, to: opt.from, row: row, raf: 0 };
+    try { e.target.setPointerCapture(e.pointerId); } catch (x) {}
+    moveDrag(e.clientY);
+    var pane = $('#pane');
+    (function auto() {                     // 端までドラッグしたら一覧を自動でスクロール
+      if (!drag) return;
+      var pr = pane.getBoundingClientRect(), y = drag.y, sp = 0;
+      if (y < pr.top + 48) sp = -Math.ceil((pr.top + 48 - y) / 4);
+      else if (y > pr.bottom - 48) sp = Math.ceil((y - pr.bottom + 48) / 4);
+      if (sp) { pane.scrollTop += sp; moveDrag(drag.y); }
+      drag.raf = requestAnimationFrame(auto);
+    })();
+  }
+  function moveDrag(y) {
+    if (!drag) return;
+    drag.y = y;
+    drag.ghost.style.top = (y - drag.dy) + 'px';
+    var t = drag.opt.target(y); drag.to = t.k;
+    drag.line.style.top = (t.y - 1.5) + 'px';
+  }
+  function endDrag(ok) {
+    if (!drag) return;
+    var d = drag; drag = null;
+    cancelAnimationFrame(d.raf);
+    d.ghost.remove(); d.line.remove(); d.row.classList.remove('lifted');
+    if (ok) { var from = d.opt.from, to = d.to; if (to > from) to--; if (to !== from) d.opt.drop(from, to); }
+  }
+  document.addEventListener('pointermove', function (e) { if (drag) { e.preventDefault(); moveDrag(e.clientY); } }, { passive: false });
+  document.addEventListener('pointerup', function () { endDrag(true); });
+  document.addEventListener('pointercancel', function () { endDrag(false); });
+  // 曲一覧
+  $('#list').addEventListener('pointerdown', function (e) {
+    var g = e.target.closest('.grip'); if (!g) return;
+    if (query.trim()) { e.preventDefault(); toast('絞り込み中は並べ替えできません'); return; }
+    var row = g.closest('.row'), list = $('#list');
+    startDrag(e, row, {
+      from: +row.dataset.i,
+      target: function (y) {
+        var r = list.getBoundingClientRect(), k = Math.max(0, Math.min(tracks.length, Math.round((y - r.top) / ROW_H)));
+        return { k: k, y: r.top + k * ROW_H };
+      },
+      drop: function (from, to) {
+        var t0 = tracks[cur], t = tracks.splice(from, 1)[0]; tracks.splice(to, 0, t);
+        cur = idx(t0); saveOrder(); renderList(); renderNow(); if (!ctx) preloadNext();
+      }
+    });
+  });
+  // プレイリスト
+  $('#detail').addEventListener('pointerdown', function (e) {
+    var g = e.target.closest('.grip'); if (!g || view !== 'playlists') return;
+    var row = g.closest('.row'), rows = $$('#detail .tracks .row');
+    startDrag(e, row, {
+      from: +row.dataset.k,
+      target: function (y) {
+        var k = 0; rows.forEach(function (rw) { var b = rw.getBoundingClientRect(); if (y > b.top + b.height / 2) k++; });
+        var ref = rows[Math.min(k, rows.length - 1)].getBoundingClientRect();
+        return { k: k, y: k < rows.length ? ref.top : ref.bottom };
+      },
+      drop: function (from, to) {
+        var pl = plById(openPl); if (!pl) return;
+        pl.ids = pl.ids.map(byId).filter(Boolean).map(function (t) { return t.id; });
+        var id = pl.ids.splice(from, 1)[0]; pl.ids.splice(to, 0, id);
+        if (ctx) { var cs = ctx.join(','), ps = pl.ids.slice().sort().join(','); if (ctx.slice().sort().join(',') === ps) ctx = pl.ids.slice(); }   // このプレイリストを再生中なら並びも合わせる
+        savePl(); renderList(); renderNow(); if (ctx) preloadNext();
+      }
+    });
+  });
+
+  /* ---- 回るCD(ジャケットなしのとき) ---- */
+  function renderDisc() {
+    var u = coverUrl(tracks[cur]), lab = $('#sdisc .dlab');
+    if (lab._u !== u) { lab._u = u; lab.style.backgroundImage = u ? 'url("' + u + '")' : ''; lab.classList.toggle('none', !u); }
+    $('#sdisc').classList.toggle('on', !audio.paused && cur >= 0);
+  }
+
   /* ---- かわいいの色テーマ(色ごとに部屋の雰囲気を変える) ---- */
   var MOTIF = {
     heart:   'M12 20C6 15.5 3 12.6 3 9.2 3 6.8 4.9 5 7.2 5c1.9 0 3.4 1 4.8 2.8C13.4 6 14.9 5 16.8 5 19.1 5 21 6.8 21 9.2c0 3.4-3 6.3-9 10.8z',
@@ -1776,6 +1897,7 @@ body.staging #veil { opacity: 0; }
     $(p[0]).addEventListener('input', function (e) { look[p[1]] = +e.target.value; saveLook(); applyLook(); });
   });
   $('#lmain').addEventListener('change', function (e) { look.main = e.target.checked; saveLook(); applyLook(); });
+  $('#ldisc').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; look.disc = b.dataset.v === '1'; saveLook(); applyLook(); });
   $('#lmainfx').addEventListener('change', function (e) { look.mainFx = e.target.checked; saveLook(); applyLook(); });
   [['#lstyle', 'style'], ['#lcs', 'cs'], ['#lfx', 'fx']].forEach(function (p) {
     $(p[0]).addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; look[p[1]] = b.dataset.v; saveLook(); applyLook(); });
